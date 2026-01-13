@@ -1,16 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Dashboard, Document, Announcement, Profile, Company } from '@/types';
 import { useAuth } from './AuthContext';
-import { mockDashboards } from '@/data/mockData';
-
-// Lazy import do supabaseService apenas quando necessário
-let supabaseService: typeof import('@/services/supabaseService') | null = null;
-const loadSupabaseService = async () => {
-  if (!supabaseService) {
-    supabaseService = await import('@/services/supabaseService');
-  }
-  return supabaseService;
-};
+import { mockDashboards, mockClients } from '@/data/mockData';
 
 interface DataContextType {
   dashboards: Dashboard[];
@@ -30,11 +21,10 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-// Modo de desenvolvimento: usar mock se Supabase não estiver configurado
-const USE_MOCK = !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY;
-
 export function DataProvider({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated } = useAuth();
+  
+  // Estado local para armazenar os dados durante a sessão
   const [dashboards, setDashboards] = useState<Dashboard[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -42,197 +32,96 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Carregar dados quando autenticado
+  // Carregar dados iniciais (Mocks)
   useEffect(() => {
-    if (!isAuthenticated) {
-      setLoading(false);
-      return;
-    }
-
-    loadData();
-  }, [isAuthenticated, user]);
-
-  const loadData = async () => {
-    if (USE_MOCK) {
-      // Modo mock: usar dados mockados
-      setDashboards(mockDashboards);
-      setDocuments([]);
-      setAnnouncements([]);
-      setProfiles([]);
-      setCompanies([]);
-      setLoading(false);
-      return;
-    }
-
-    try {
+    if (isAuthenticated) {
       setLoading(true);
-      const userCompanyId = user?.company_id;
-      const isAdmin = user?.role === 'admin';
-
-      // Carregar serviço Supabase apenas quando necessário
-      const service = await loadSupabaseService();
-
-      // Carregar dados em paralelo
-      const [dashboardsData, documentsData, announcementsData, profilesData, companiesData] = await Promise.all([
-        service.getDashboards(isAdmin ? undefined : userCompanyId),
-        service.getDocuments(isAdmin ? undefined : userCompanyId),
-        service.getAnnouncements(userCompanyId),
-        service.getProfiles(isAdmin ? undefined : userCompanyId),
-        isAdmin ? service.getCompanies() : Promise.resolve([]),
-      ]);
-
-      setDashboards(dashboardsData);
-      setDocuments(documentsData);
-      setAnnouncements(announcementsData);
-      setProfiles(profilesData);
-      setCompanies(companiesData);
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-    } finally {
+      
+      // Simulando delay de API
+      setTimeout(() => {
+        // Carrega dashboards iniciais do mock
+        setDashboards(mockDashboards);
+        
+        // Converte mockClients para o tipo Company (ajuste de tipagem se necessário)
+        // Precisamos garantir que a tipagem bata, aqui faço um cast forçado seguro para o contexto
+        setCompanies(mockClients as unknown as Company[]);
+        
+        // Inicializa outros arrays vazios ou com dados mockados futuros
+        setDocuments([]);
+        setAnnouncements([]);
+        setProfiles([]);
+        
+        setLoading(false);
+      }, 500);
+    } else {
       setLoading(false);
     }
-  };
+  }, [isAuthenticated]);
 
-  const addDashboard = async (dashboard: Omit<Dashboard, 'id' | 'created_at' | 'updated_at'>) => {
-    if (USE_MOCK) {
-      const newDashboard: Dashboard = {
-        ...dashboard,
-        id: `dash-${Date.now()}`,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        last_updated: new Date().toISOString(),
-      };
-      setDashboards([...dashboards, newDashboard]);
-      return;
-    }
-
-    try {
-      const service = await loadSupabaseService();
-      const newDashboard = await service.createDashboard(dashboard);
-      setDashboards([...dashboards, newDashboard]);
-    } catch (error) {
-      console.error('Erro ao adicionar dashboard:', error);
-      throw error;
-    }
+  const addDashboard = async (dashboardData: Omit<Dashboard, 'id' | 'created_at' | 'updated_at'>) => {
+    const newDashboard: Dashboard = {
+      ...dashboardData,
+      id: `dash-${Date.now()}`,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      last_updated: new Date().toISOString()
+    };
+    setDashboards(prev => [...prev, newDashboard]);
   };
 
   const uploadDocument = async (file: File, companyId: string) => {
-    if (USE_MOCK) {
-      const newDocument: Document = {
-        id: `doc-${Date.now()}`,
-        company_id: companyId,
-        file_url: URL.createObjectURL(file),
-        file_type: file.type,
-        file_name: file.name,
-        file_size: file.size,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      setDocuments([...documents, newDocument]);
-      return;
-    }
-
-    try {
-      const service = await loadSupabaseService();
-      const newDocument = await service.uploadDocument(file, companyId);
-      setDocuments([newDocument, ...documents]);
-    } catch (error) {
-      console.error('Erro ao fazer upload:', error);
-      throw error;
-    }
+    const newDocument: Document = {
+      id: `doc-${Date.now()}`,
+      company_id: companyId,
+      file_url: URL.createObjectURL(file), // URL temporária local
+      file_type: file.type,
+      file_name: file.name,
+      file_size: file.size,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    setDocuments(prev => [newDocument, ...prev]);
   };
 
   const deleteDocument = async (documentId: string) => {
-    if (USE_MOCK) {
-      setDocuments(documents.filter(d => d.id !== documentId));
-      return;
-    }
-
-    try {
-      const service = await loadSupabaseService();
-      await service.deleteDocument(documentId);
-      setDocuments(documents.filter(d => d.id !== documentId));
-    } catch (error) {
-      console.error('Erro ao deletar documento:', error);
-      throw error;
-    }
+    setDocuments(prev => prev.filter(d => d.id !== documentId));
   };
 
-  const addAnnouncement = async (announcement: { message: string; company_id?: string }) => {
-    if (USE_MOCK) {
-      const newAnnouncement: Announcement = {
-        id: `ann-${Date.now()}`,
-        message: announcement.message,
-        date: new Date().toISOString(),
-        active: true,
-        company_id: announcement.company_id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      setAnnouncements([newAnnouncement, ...announcements]);
-      return;
-    }
-
-    try {
-      const service = await loadSupabaseService();
-      const newAnnouncement = await service.createAnnouncement(announcement);
-      setAnnouncements([newAnnouncement, ...announcements]);
-    } catch (error) {
-      console.error('Erro ao adicionar comunicado:', error);
-      throw error;
-    }
+  const addAnnouncement = async (data: { message: string; company_id?: string }) => {
+    const newAnnouncement: Announcement = {
+      id: `ann-${Date.now()}`,
+      message: data.message,
+      date: new Date().toISOString(),
+      active: true,
+      company_id: data.company_id,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    setAnnouncements(prev => [newAnnouncement, ...prev]);
   };
 
-  const addUser = async (user: { email: string; name: string; role: 'admin' | 'client'; company_id?: string }) => {
-    if (USE_MOCK) {
-      const newProfile: Profile = {
-        id: `profile-${Date.now()}`,
-        user_id: `user-${Date.now()}`,
-        company_id: user.company_id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      setProfiles([...profiles, newProfile]);
-      return;
-    }
-
-    try {
-      const service = await loadSupabaseService();
-      const newProfile = await service.createUser(user);
-      setProfiles([...profiles, newProfile]);
-      await loadData(); // Recarregar para atualizar lista
-    } catch (error) {
-      console.error('Erro ao adicionar usuário:', error);
-      throw error;
-    }
+  const addUser = async (userData: { email: string; name: string; role: 'admin' | 'client'; company_id?: string }) => {
+    const newProfile: Profile = {
+      id: `profile-${Date.now()}`,
+      user_id: `user-${Date.now()}`,
+      company_id: userData.company_id,
+      name: userData.name,
+      email: userData.email,
+      role: userData.role,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    setProfiles(prev => [...prev, newProfile]);
   };
 
   const deleteUser = async (userId: string) => {
-    if (USE_MOCK) {
-      setProfiles(profiles.filter(p => p.id !== userId));
-      return;
-    }
-
-    try {
-      const service = await loadSupabaseService();
-      await service.deleteUser(userId);
-      setProfiles(profiles.filter(p => p.id !== userId));
-    } catch (error) {
-      console.error('Erro ao deletar usuário:', error);
-      throw error;
-    }
+    setProfiles(prev => prev.filter(p => p.id !== userId));
   };
 
   const getUnreadAnnouncementsCount = (companyId?: string): number => {
-    // Por enquanto, retornar todos os anúncios ativos como "não lidos"
-    // Em produção, você pode adicionar uma tabela de "read_announcements" para rastrear
-    const relevantAnnouncements = announcements.filter(a => 
+    return announcements.filter(a => 
       a.active && (!a.company_id || a.company_id === companyId)
-    );
-    return relevantAnnouncements.length;
+    ).length;
   };
 
   return (
