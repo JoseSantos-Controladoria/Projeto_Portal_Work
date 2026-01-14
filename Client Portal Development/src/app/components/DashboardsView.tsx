@@ -1,205 +1,142 @@
-import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
-import { Button } from '@/app/components/ui/button';
-import { Badge } from '@/app/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/app/components/ui/dialog';
-import { Input } from '@/app/components/ui/input';
-import { Label } from '@/app/components/ui/label';
-import { Textarea } from '@/app/components/ui/textarea';
+import { useState } from "react";
+import { Dashboard } from "@/types";
 import { 
-  TrendingUp, 
-  ExternalLink,
-  Plus,
-  X
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Dashboard } from '@/types';
+  Search, 
+  Plus, 
+  BarChart3, 
+  ArrowUpRight, 
+  Clock 
+} from "lucide-react";
+import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/app/components/ui/card";
+import { Badge } from "@/app/components/ui/badge";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface DashboardsViewProps {
   dashboards: Dashboard[];
-  onViewReport: (dashboardId: string) => void;
-  onAddDashboard?: (dashboard: Omit<Dashboard, 'id' | 'created_at' | 'updated_at'>) => void;
+  onViewReport: (id: string) => void;
+  onAddDashboard?: (dashboard: any) => Promise<void>;
 }
 
 export function DashboardsView({ dashboards, onViewReport, onAddDashboard }: DashboardsViewProps) {
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newDashboard, setNewDashboard] = useState({
-    title: '',
-    description: '',
-    embed_url: '',
-    company_id: '',
-  });
+  // 1. Estado local para armazenar o termo de busca
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const getTimeAgo = (dateString: string) => {
-    try {
-      return formatDistanceToNow(new Date(dateString), {
-        addSuffix: true,
-        locale: ptBR,
-      });
-    } catch {
-      return 'Data indisponível';
-    }
-  };
-
-  const handleAddDashboard = () => {
-    if (!newDashboard.title || !newDashboard.embed_url) {
-      return;
-    }
-    onAddDashboard?.({
-      title: newDashboard.title,
-      description: newDashboard.description,
-      embed_url: newDashboard.embed_url,
-      company_id: newDashboard.company_id || user?.company_id || '',
-    });
-    setNewDashboard({ title: '', description: '', embed_url: '', company_id: '' });
-    setIsDialogOpen(false);
-  };
+  // 2. Lógica de filtragem (Case Insensitive)
+  // Filtramos se o termo existe no Título OU na Descrição
+  const filteredDashboards = dashboards.filter(dashboard => 
+    dashboard.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    dashboard.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Header com Busca */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+            <BarChart3 className="w-6 h-6 text-[#2563EB]" />
             Dashboards
           </h1>
-          <p className="text-slate-600 text-lg">
-            {isAdmin ? 'Gerencie e visualize todos os relatórios' : 'Acesse seus relatórios de trade marketing'}
+          <p className="text-slate-500 text-sm mt-1">
+            Visualize os indicadores de performance da sua empresa.
           </p>
         </div>
-        {isAdmin && onAddDashboard && (
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-[#2563EB] hover:bg-[#1d4ed8]">
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Relatório
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Adicionar Novo Relatório</DialogTitle>
-                <DialogDescription>
-                  Configure um novo dashboard do Power BI para um cliente.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Título *</Label>
-                  <Input
-                    id="title"
-                    placeholder="Ex: Performance de Vendas - Janeiro"
-                    value={newDashboard.title}
-                    onChange={(e) => setNewDashboard({ ...newDashboard, title: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descrição</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Descreva o conteúdo deste relatório..."
-                    value={newDashboard.description}
-                    onChange={(e) => setNewDashboard({ ...newDashboard, description: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="embed_url">URL do Iframe (Power BI) *</Label>
-                  <Input
-                    id="embed_url"
-                    placeholder="https://app.powerbi.com/view?r=..."
-                    value={newDashboard.embed_url}
-                    onChange={(e) => setNewDashboard({ ...newDashboard, embed_url: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="company_id">ID da Empresa (opcional)</Label>
-                  <Input
-                    id="company_id"
-                    placeholder="Deixe vazio para empresa atual"
-                    value={newDashboard.company_id}
-                    onChange={(e) => setNewDashboard({ ...newDashboard, company_id: e.target.value })}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button 
-                  className="bg-[#2563EB] hover:bg-[#1d4ed8]"
-                  onClick={handleAddDashboard}
-                  disabled={!newDashboard.title || !newDashboard.embed_url}
-                >
-                  Adicionar
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
+
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          {/* Input de Busca com Ícone */}
+          <div className="relative w-full md:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              placeholder="Buscar por nome ou descrição..."
+              className="pl-9 bg-slate-50 border-slate-200 focus:bg-white transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          {/* Botão de Adicionar (Apenas Admin) */}
+          {onAddDashboard && (
+            <Button 
+              className="bg-[#2563EB] hover:bg-[#1d4ed8] shadow-md shadow-blue-500/20"
+              onClick={() => {
+                // Aqui abriremos o modal no futuro
+                alert("Feature de Adicionar Dashboard em breve!");
+              }}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Novo
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Grid de Dashboards */}
-      {dashboards.length === 0 ? (
-        <Card className="text-center py-12">
-          <CardContent>
-            <TrendingUp className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-slate-600 mb-2">
-              Nenhum relatório disponível
-            </h3>
-            <p className="text-slate-500">
-              {isAdmin 
-                ? 'Comece adicionando um novo relatório usando o botão acima.'
-                : 'Entre em contato com seu gerente de conta para solicitar acesso aos relatórios.'}
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {dashboards.map((dashboard) => {
-            const createdDate = dashboard.created_at || dashboard.last_updated || new Date().toISOString();
-            
-            return (
-              <Card
-                key={dashboard.id}
-                className="group hover:shadow-lg transition-all duration-200 border-2 hover:border-[#2563EB]/30 cursor-pointer rounded-xl shadow-sm"
-                onClick={() => onViewReport(dashboard.id)}
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="w-12 h-12 bg-[#2563EB]/10 rounded-xl flex items-center justify-center group-hover:bg-[#2563EB] transition-colors">
-                      <TrendingUp className="w-6 h-6 text-[#2563EB] group-hover:text-white transition-colors" />
-                    </div>
-                    <Badge variant="secondary" className="text-xs">
-                      {getTimeAgo(createdDate)}
-                    </Badge>
+      {/* Grid de Resultados */}
+      {filteredDashboards.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredDashboards.map((dashboard) => (
+            <Card 
+              key={dashboard.id} 
+              className="group hover:shadow-lg transition-all duration-300 border-slate-200 cursor-pointer overflow-hidden"
+              onClick={() => onViewReport(dashboard.id)}
+            >
+              <div className="h-2 bg-[#2563EB] w-full origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                    <BarChart3 className="w-6 h-6" />
                   </div>
-                  <CardTitle className="text-xl group-hover:text-[#2563EB] transition-colors">
-                    {dashboard.title}
-                  </CardTitle>
-                  {dashboard.description && (
-                    <CardDescription className="line-clamp-2 min-h-[40px]">
-                      {dashboard.description}
-                    </CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <Button 
-                    className="w-full bg-[#2563EB] hover:bg-[#1d4ed8] group-hover:shadow-md transition-all"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onViewReport(dashboard.id);
-                    }}
-                  >
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Visualizar Relatório
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
+                  <Badge variant="secondary" className="bg-slate-100 text-slate-600">
+                    Power BI
+                  </Badge>
+                </div>
+                <CardTitle className="text-lg font-bold text-slate-800 leading-tight group-hover:text-[#2563EB] transition-colors">
+                  {dashboard.title}
+                </CardTitle>
+                <CardDescription className="line-clamp-2 text-sm mt-1">
+                  {dashboard.description}
+                </CardDescription>
+              </CardHeader>
+              
+              <CardFooter className="pt-0 flex items-center justify-between text-xs text-slate-400 border-t border-slate-50 mt-4 p-4 bg-slate-50/50">
+                <div className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  <span>Atualizado {format(new Date(dashboard.last_updated), "d 'de' MMM", { locale: ptBR })}</span>
+                </div>
+                <div className="flex items-center gap-1 text-[#2563EB] font-medium opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0">
+                  Abrir Relatório
+                  <ArrowUpRight className="w-3 h-3" />
+                </div>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        /* Estado Vazio (Zero Results) */
+        <div className="text-center py-20 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+          <div className="mx-auto h-12 w-12 text-slate-300 mb-4">
+            <Search className="h-full w-full" />
+          </div>
+          <h3 className="text-lg font-medium text-slate-900">Nenhum relatório encontrado</h3>
+          <p className="text-slate-500 max-w-sm mx-auto mt-2">
+            Não encontramos resultados para "{searchTerm}". Tente buscar por outros termos.
+          </p>
+          <Button 
+            variant="link" 
+            className="mt-4 text-[#2563EB]"
+            onClick={() => setSearchTerm("")}
+          >
+            Limpar busca
+          </Button>
         </div>
       )}
     </div>
