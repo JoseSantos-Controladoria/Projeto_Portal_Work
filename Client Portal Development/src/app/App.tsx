@@ -5,15 +5,18 @@ import { LoginPage } from "@/app/components/LoginPage";
 import { Sidebar, SidebarView } from "@/app/components/Sidebar";
 import { Toaster } from "@/app/components/ui/sonner";
 
-// Lazy loading dos componentes
+// Lazy loading
 const DashboardsView = lazy(() => import("@/app/components/DashboardsView").then(m => ({ default: m.DashboardsView })));
 const ReportViewer = lazy(() => import("@/app/components/ReportViewer").then(m => ({ default: m.ReportViewer })));
-// ADICIONADO: Import do ClientsListView
 const ClientsListView = lazy(() => import("@/app/components/ClientsListView").then(m => ({ default: m.ClientsListView })));
+const WorkspacesListView = lazy(() => import("@/app/components/WorkspacesListView").then(m => ({ default: m.WorkspacesListView })));
+const UsersManagementView = lazy(() => import("@/app/components/UsersManagementView").then(m => ({ default: m.UsersManagementView }))); 
+// NOVO IMPORT
+const ReportsManagementView = lazy(() => import("@/app/components/ReportsManagementView").then(m => ({ default: m.ReportsManagementView })));
 
 function AppContent() {
   const { isAuthenticated, user, loading } = useAuth();
-  const { dashboards } = useData();
+  const { dashboards, companies } = useData();
   
   const [activeView, setActiveView] = useState<SidebarView>('reports');
   const [selectedDashboardId, setSelectedDashboardId] = useState<string | null>(null);
@@ -58,12 +61,15 @@ function AppContent() {
       />
       
       <main className="flex-1 overflow-y-auto bg-slate-50/50">
-        {/* Header Simples */}
         <header className="px-8 py-5 bg-white border-b border-slate-100 sticky top-0 z-10">
           <h1 className="text-2xl font-bold text-slate-800 capitalize">
             {activeView === 'reports' ? 'Relatórios de Performance' : 
+             activeView === 'register_report' ? 'Gestão de Relatórios' :
              activeView === 'clients' ? 'Gestão de Clientes e Grupos' : 
+             activeView === 'workspaces' ? 'Gestão de Workspaces' :
              activeView === 'logs' ? 'Logs de Auditoria' :
+             activeView === 'users' ? 'Gerenciamento de Usuários' :
+             
              activeView}
           </h1>
         </header>
@@ -74,26 +80,29 @@ function AppContent() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
           }>
-            {/* View de Relatórios */}
+            {/* 1. VISUALIZAÇÃO DE RELATÓRIOS (CONSUMO) */}
             {activeView === 'reports' && (
               <DashboardsView
                 dashboards={visibleDashboards}
+                companies={companies}
                 onViewReport={setSelectedDashboardId}
               />
             )}
 
-            {/* ADICIONADO: View de Clientes e Grupos */}
-            {activeView === 'clients' && (
-              <ClientsListView />
+            {/* 2. GESTÃO DE RELATÓRIOS (ADMIN) */}
+            {activeView === 'register_report' && (
+              <ReportsManagementView />
             )}
+
+            {/* 3. WORKSPACES */}
+            {activeView === 'workspaces' && <WorkspacesListView />}
+
+            {/* 4. CLIENTES E GRUPOS */}
+            {activeView === 'clients' && <ClientsListView />}
             
-            {/* Placeholders */}
-            {activeView !== 'reports' && activeView !== 'clients' && (
-              <div className="flex flex-col items-center justify-center h-96 text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl bg-white">
-                <p className="text-lg font-medium text-slate-600">Em desenvolvimento</p>
-                <p className="text-sm mt-2">Módulo: <span className="font-mono text-blue-600">{activeView}</span></p>
-              </div>
-            )}
+
+            {/* 6. GESTÃO DE USUÁRIOS */}
+            {activeView === 'users' && <UsersManagementView />} 
           </Suspense>
         </div>
       </main>

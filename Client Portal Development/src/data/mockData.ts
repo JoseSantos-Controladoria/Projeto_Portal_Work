@@ -3,19 +3,19 @@ import { User, Client, Dashboard } from '@/types';
 export const mockClients: Client[] = [
   {
     id: 'client-1',
-    name: 'Supermercados Brasil S.A.',
+    name: 'HALEON',
     logoUrl: 'https://images.unsplash.com/photo-1534452203293-494d7ddbf7e0?w=200&h=200&fit=crop',
     createdAt: '2025-01-01T00:00:00Z',
   },
   {
     id: 'client-2',
-    name: 'Rede Atacado Premium',
+    name: 'SEMP TCL',
     logoUrl: 'https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=200&h=200&fit=crop',
     createdAt: '2025-01-02T00:00:00Z',
   },
   {
     id: 'client-3',
-    name: 'Magazine Varejo Total',
+    name: 'P&G',
     logoUrl: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=200&h=200&fit=crop',
     createdAt: '2025-01-03T00:00:00Z',
   },
