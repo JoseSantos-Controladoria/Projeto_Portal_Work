@@ -108,15 +108,12 @@ export function LoginPage() {
       <Card className="w-full max-w-md shadow-2xl border-white/50 bg-white/95 backdrop-blur-xl relative z-10 animate-in fade-in zoom-in duration-500">
         <CardHeader className="space-y-6 flex flex-col items-center pt-10 pb-6">
           
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200" />
-            <div className="relative w-24 h-24 bg-white rounded-2xl shadow-xl flex items-center justify-center p-5 ring-1 ring-slate-900/5">
-              <img 
-                src="/images/work-on.png" 
-                alt="Logo Work On" 
-                className="w-full h-full object-contain"
-              />
-            </div>
+          <div className="relative w-24 h-24 flex items-center justify-center p-1">
+            <img 
+              src="/images/work-on.png" 
+              alt="Logo Work On" 
+              className="w-full h-full object-contain"
+            />
           </div>
 
           <div className="text-center space-y-2">
@@ -146,7 +143,7 @@ export function LoginPage() {
             
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" classname="text-slate-700">Senha</Label>
+                <Label htmlFor="password" className="text-slate-700">Senha</Label>
                 <a href="#" className="text-xs text-blue-600 hover:text-blue-500 font-medium hover:underline">
                   Esqueceu a senha?
                 </a>

@@ -52,12 +52,11 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
 {/* --- HEADER COM LOGO --- */}
 <div className="p-6 flex items-center gap-3 border-b border-slate-800/50">
   
-  <div className="relative w-10 h-10 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg shadow-blue-900/20">
-    {/* ATUALIZADO AQUI: */}
+  <div className="relative w-10 h-10 flex items-center justify-center">
     <img 
-      src="/images/work-on.png"  // O caminho começa com / (que representa a pasta public)
+      src="/images/work-on.png" 
       alt="Logo Work On" 
-      className="w-8 h-8 object-contain" 
+      className="w-full h-full object-contain" 
     />
   </div>
 
