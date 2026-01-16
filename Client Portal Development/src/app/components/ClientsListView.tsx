@@ -19,12 +19,9 @@ import {
 } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
 import { Input } from "@/app/components/ui/input";
-
-// Importando os componentes das listas
 import { GroupsListView } from "./GroupsListView";
 import { ClientsList } from "./ClientsList";
 
-// Tipagem corrigida (sem Workspaces)
 type InternalView = 'selection' | 'clients_list' | 'groups_list' | 'client_details';
 
 export function ClientsListView() {
@@ -38,14 +35,10 @@ export function ClientsListView() {
     setReportSearch("");
   };
 
-  // --- RENDERIZAÇÃO DAS VIEWS ---
-
-  // 1. VIEW: Lista de Grupos
   if (currentView === 'groups_list') {
     return <GroupsListView onBack={() => setCurrentView('selection')} />;
   }
 
-  // 2. VIEW: Lista de Clientes
   if (currentView === 'clients_list') {
     return (
       <ClientsList 
@@ -55,7 +48,6 @@ export function ClientsListView() {
     );
   }
 
-  // 3. VIEW: Dashboards (Detalhes do Cliente)
   if (currentView === 'client_details' && selectedClient) {
     const mockReports = Array.from({ length: selectedClient.activeReports || 6 }).map((_, i) => ({
       id: i,
@@ -132,7 +124,6 @@ export function ClientsListView() {
     );
   }
 
-  // 4. VIEW PADRÃO: Seleção Inicial (Apenas 2 Cards)
   return (
     <div className="max-w-5xl mx-auto mt-10 animate-in fade-in zoom-in duration-300">
       <div className="text-center mb-10">

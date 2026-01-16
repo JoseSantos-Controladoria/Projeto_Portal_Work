@@ -24,7 +24,7 @@ export const mockClients: Client[] = [
 export const mockUsers: User[] = [
   {
     id: 'user-1',
-    email: 'admin@tradedata.com',
+    email: 'admin@workongroup.com.br',
     password: 'admin123',
     name: 'Administrador',
     role: 'admin',

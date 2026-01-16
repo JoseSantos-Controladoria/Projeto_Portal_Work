@@ -68,7 +68,6 @@ export function ReportRegistrationModal({ isOpen, onClose }: ReportRegistrationM
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      {/* Aumentei a largura para 850px para dar o aspecto retangular "widescreen" */}
       <DialogContent className="sm:max-w-[850px] p-0 overflow-hidden gap-0">
         
         {/* Header Estilizado */}
@@ -87,7 +86,7 @@ export function ReportRegistrationModal({ isOpen, onClose }: ReportRegistrationM
         <form onSubmit={handleSubmit}>
           <div className="grid md:grid-cols-12 h-full">
             
-            {/* COLUNA ESQUERDA: Upload de Imagem (Visual) */}
+            {/* C */}
             <div className="md:col-span-5 p-6 bg-slate-50 border-r border-slate-100 flex flex-col gap-4">
               <Label className="text-slate-700 font-semibold">Capa do Relatório</Label>
               <p className="text-xs text-slate-500 -mt-2 mb-2">
@@ -163,7 +162,7 @@ export function ReportRegistrationModal({ isOpen, onClose }: ReportRegistrationM
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="HALEON">HALEON</SelectItem>
+                      <SelectItem value="Sherwin-Williams">Sherwin-Williams</SelectItem>
                       <SelectItem value="P&G">P&G</SelectItem>
                       <SelectItem value="SEMP TCL">SEMP TCL</SelectItem>
                     </SelectContent>

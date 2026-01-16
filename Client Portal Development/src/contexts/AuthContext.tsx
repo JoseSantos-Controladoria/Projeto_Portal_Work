@@ -19,13 +19,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simula verificação de sessão ao carregar a página
     const savedUser = localStorage.getItem('tradedata_user');
     if (savedUser) {
       try {
         const parsedUser = JSON.parse(savedUser);
         setUser(parsedUser);
-        // Em um cenário real, carregaríamos o perfil aqui
       } catch (e) {
         console.error('Erro ao recuperar sessão:', e);
         localStorage.removeItem('tradedata_user');
@@ -35,7 +33,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Simula delay de rede
     await new Promise(resolve => setTimeout(resolve, 500));
 
     const foundUser = mockUsers.find(
@@ -44,7 +41,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (foundUser) {
       setUser(foundUser);
-      // Persistir sessão simples
       localStorage.setItem('tradedata_user', JSON.stringify(foundUser));
       return true;
     }

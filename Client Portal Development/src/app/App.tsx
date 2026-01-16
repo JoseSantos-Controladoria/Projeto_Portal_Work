@@ -5,15 +5,12 @@ import { LoginPage } from "@/app/components/LoginPage";
 import { Sidebar, SidebarView } from "@/app/components/Sidebar";
 import { Toaster } from "@/app/components/ui/sonner";
 
-// Lazy loading dos componentes
 const DashboardsView = lazy(() => import("@/app/components/DashboardsView").then(m => ({ default: m.DashboardsView })));
 const ReportViewer = lazy(() => import("@/app/components/ReportViewer").then(m => ({ default: m.ReportViewer })));
 const ClientsListView = lazy(() => import("@/app/components/ClientsListView").then(m => ({ default: m.ClientsListView })));
 const WorkspacesListView = lazy(() => import("@/app/components/WorkspacesListView").then(m => ({ default: m.WorkspacesListView })));
 const UsersManagementView = lazy(() => import("@/app/components/UsersManagementView").then(m => ({ default: m.UsersManagementView }))); 
 const ReportsManagementView = lazy(() => import("@/app/components/ReportsManagementView").then(m => ({ default: m.ReportsManagementView })));
-
-// NOVO IMPORT: Logs de Acesso
 const AccessLogsView = lazy(() => import("@/app/components/AccessLogsView").then(m => ({ default: m.AccessLogsView })));
 
 function AppContent() {

@@ -61,7 +61,6 @@ export function UserRegistrationModal({ isOpen, onClose }: UserRegistrationModal
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simula API
     await new Promise(resolve => setTimeout(resolve, 1500));
     console.log("Novo Usuário:", { ...formData, avatarPreview });
     setIsLoading(false);

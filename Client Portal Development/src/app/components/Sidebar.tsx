@@ -2,7 +2,7 @@ import { cn } from "@/app/components/ui/utils";
 import { Button } from "@/app/components/ui/button";
 import { 
   LogOut, 
-  LayoutGrid, // Mantive apenas para os menus internos
+  LayoutGrid, 
   BarChart3,
   Users,
   Building2,

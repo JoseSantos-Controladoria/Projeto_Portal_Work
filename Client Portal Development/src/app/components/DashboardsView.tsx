@@ -30,7 +30,7 @@ import { ptBR } from "date-fns/locale";
 
 interface DashboardsViewProps {
   dashboards: Dashboard[];
-  companies: Company[]; // Recebendo a lista de empresas para o filtro
+  companies: Company[]; 
   onViewReport: (id: string) => void;
 }
 
@@ -38,25 +38,22 @@ export function DashboardsView({ dashboards, companies, onViewReport }: Dashboar
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("all");
   
-  // Estado de Favoritos (Persistente no LocalStorage)
   const [favorites, setFavorites] = useState<string[]>(() => {
     const saved = localStorage.getItem('dashboard_favorites');
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Salva no LocalStorage sempre que mudar
   useEffect(() => {
     localStorage.setItem('dashboard_favorites', JSON.stringify(favorites));
   }, [favorites]);
 
   const toggleFavorite = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Evita abrir o relatório ao clicar no coração
+    e.stopPropagation(); 
     setFavorites(prev => 
       prev.includes(id) ? prev.filter(favId => favId !== id) : [...prev, id]
     );
   };
 
-  // Lógica de Filtragem (Texto + Cliente)
   const filteredDashboards = dashboards.filter(dashboard => {
     const matchesSearch = dashboard.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           dashboard.description?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -65,7 +62,6 @@ export function DashboardsView({ dashboards, companies, onViewReport }: Dashboar
     return matchesSearch && matchesCompany;
   });
 
-  // Lógica de Ordenação: Favoritos aparecem primeiro
   const sortedDashboards = [...filteredDashboards].sort((a, b) => {
     const isFavA = favorites.includes(a.id);
     const isFavB = favorites.includes(b.id);
@@ -194,7 +190,7 @@ export function DashboardsView({ dashboards, companies, onViewReport }: Dashboar
           })}
         </div>
       ) : (
-        /* Estado Vazio */
+
         <div className="text-center py-20 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
           <div className="mx-auto h-12 w-12 text-slate-300 mb-4">
             <Search className="h-full w-full" />

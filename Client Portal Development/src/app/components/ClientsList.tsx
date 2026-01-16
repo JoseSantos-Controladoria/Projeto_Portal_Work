@@ -27,23 +27,21 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
 
-// Interface do Cliente
 interface ClientData {
   id: string;
   name: string;
   description: string;
-  logoColor: string; // Apenas para simular cores de logo
+  logoColor: string; 
   groups: string[];
   activeReports: number;
 }
 
-// Dados Mockados (Atualizados com HALEON, SEMP TCL e P&G)
 const MOCK_CLIENTS: ClientData[] = [
   { 
     id: '1', 
-    name: 'HALEON', 
-    description: 'Líder mundial em saúde do consumidor (Consumer Health).',
-    logoColor: 'bg-orange-500', // Laranja característico
+    name: 'Sherwin-Williams', 
+    description: 'Produtos para construção, com foco na produção, distribuição e venda de tintas.',
+    logoColor: 'bg-slate-500', 
     groups: ['Comercial', 'Trade Marketing', 'Farmas'],
     activeReports: 12
   },
@@ -51,7 +49,7 @@ const MOCK_CLIENTS: ClientData[] = [
     id: '2', 
     name: 'SEMP TCL', 
     description: 'Pioneira em eletrônicos e uma das maiores fabricantes de TVs.',
-    logoColor: 'bg-red-600', // Vermelho característico
+    logoColor: 'bg-red-600', 
     groups: ['Vendas Varejo', 'Produto', 'Marketing'],
     activeReports: 8
   },
@@ -59,7 +57,7 @@ const MOCK_CLIENTS: ClientData[] = [
     id: '3', 
     name: 'P&G', 
     description: 'Multinacional de bens de consumo (Procter & Gamble).',
-    logoColor: 'bg-blue-700', // Azul característico
+    logoColor: 'bg-blue-700', 
     groups: ['Gerência', 'Campo - Norte/Nordeste', 'Merchandising'],
     activeReports: 15
   },

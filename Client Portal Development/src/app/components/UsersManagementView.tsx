@@ -42,10 +42,8 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
 
-// Import do Modal
 import { UserRegistrationModal } from "./UserRegistrationModal";
 
-// Interface Local
 interface UserData {
   id: string;
   name: string;
@@ -58,7 +56,6 @@ interface UserData {
   lastLogin: string;
 }
 
-// Dados Mockados
 const MOCK_USERS: UserData[] = [
   { 
     id: '1', 
@@ -114,22 +111,18 @@ const MOCK_USERS: UserData[] = [
 ];
 
 export function UsersManagementView() {
-  // Estados de Filtro
   const [filterCompany, setFilterCompany] = useState<string>("all");
   const [filterRole, setFilterRole] = useState<string>("all");
   const [filterSearch, setFilterSearch] = useState("");
   
-  // Estado do Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Limpar Filtros
   const handleClear = () => {
     setFilterCompany("all");
     setFilterRole("all");
     setFilterSearch("");
   };
 
-  // Lógica de Filtragem (Reativa para Selects, Direta para Busca)
   const filteredUsers = MOCK_USERS.filter(user => {
     const matchesCompany = filterCompany === "all" || user.internalCompany === filterCompany;
     const matchesRole = filterRole === "all" || user.role === filterRole;

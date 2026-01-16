@@ -44,8 +44,6 @@ export function WorkspaceRegistrationModal({ isOpen, onClose }: WorkspaceRegistr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    // Simulação de API
     await new Promise(resolve => setTimeout(resolve, 1500));
     console.log("Novo Workspace:", formData);
     
@@ -100,7 +98,7 @@ export function WorkspaceRegistrationModal({ isOpen, onClose }: WorkspaceRegistr
             </div>
           </div>
 
-          {/* Linha 2: URL (Agora Full Width para caber links longos) */}
+          {/* Linha 2: URL  */}
           <div className="space-y-2">
             <Label htmlFor="url" className="flex items-center gap-2">
               <Globe className="w-3.5 h-3.5 text-slate-400" /> URL de Acesso

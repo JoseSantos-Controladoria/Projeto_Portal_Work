@@ -37,7 +37,6 @@ import {
 
 import { WorkspaceRegistrationModal } from "./WorkspaceRegistrationModal";
 
-// Interface Atualizada (Sem ID técnico)
 interface WorkspaceData {
   id: string;
   name: string;
@@ -46,7 +45,6 @@ interface WorkspaceData {
   url: string;
 }
 
-// Dados Mockados Atualizados
 const MOCK_WORKSPACES: WorkspaceData[] = [
   { 
     id: '1', 
@@ -193,7 +191,6 @@ export function WorkspacesListView() {
                 <TableRow key={ws.id} className="hover:bg-slate-50/50">
                   <TableCell>
                     <div className="font-semibold text-slate-800">{ws.name}</div>
-                    {/* ID Removido daqui */}
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="font-normal text-slate-600 bg-slate-50">

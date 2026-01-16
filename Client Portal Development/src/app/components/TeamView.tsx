@@ -80,7 +80,6 @@ export function TeamView({ profiles, companies = [], onAddUser, onDeleteUser }: 
     }
   };
 
-  // Filtrar perfis baseado no role
   const visibleProfiles = isAdmin 
     ? profiles 
     : profiles.filter(p => p.company_id === user?.company_id);

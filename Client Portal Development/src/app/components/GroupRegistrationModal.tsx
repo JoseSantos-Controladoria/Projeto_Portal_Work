@@ -32,12 +32,11 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar";
 import { Badge } from "@/app/components/ui/badge";
 
-// Mock de Usuários
 const MOCK_AVAILABLE_USERS = [
-  { id: 'u1', name: 'Roberto Almeida', email: 'roberto@haleon.com', role: 'Analista', avatar: 'https://github.com/shadcn.png' },
+  { id: 'u1', name: 'Roberto Almeida', email: 'roberto@Sherwin-Williams.com', role: 'Analista', avatar: 'https://github.com/shadcn.png' },
   { id: 'u2', name: 'Fernanda Costa', email: 'fernanda@pg.com', role: 'Gerente', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024d' },
   { id: 'u3', name: 'Juliana Silva', email: 'juliana@semptcl.com', role: 'Analista', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d' },
-  { id: 'u4', name: 'Ricardo Oliveira', email: 'ricardo@haleon.com', role: 'Diretor', avatar: '' },
+  { id: 'u4', name: 'Ricardo Oliveira', email: 'ricardo@Sherwin-Williams.com', role: 'Diretor', avatar: '' },
   { id: 'u5', name: 'Amanda Souza', email: 'amanda@workon.com', role: 'Admin', avatar: '' },
   { id: 'u6', name: 'Carlos Lima', email: 'carlos@pg.com', role: 'Analista', avatar: '' },
   { id: 'u7', name: 'Ana Paula', email: 'ana@semptcl.com', role: 'Gerente', avatar: '' },
@@ -132,7 +131,7 @@ export function GroupRegistrationModal({ isOpen, onClose }: GroupRegistrationMod
                         <SelectValue placeholder="Selecione..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="HALEON">HALEON</SelectItem>
+                        <SelectItem value="Sherwin-Williams">Sherwin-Williams</SelectItem>
                         <SelectItem value="P&G">P&G</SelectItem>
                         <SelectItem value="SEMP TCL">SEMP TCL</SelectItem>
                       </SelectContent>

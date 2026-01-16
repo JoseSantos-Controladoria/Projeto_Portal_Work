@@ -36,17 +36,15 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
 
-// Import do Modal
 import { GroupRegistrationModal } from "./GroupRegistrationModal";
 
 interface GroupsListViewProps {
   onBack: () => void;
 }
 
-// Dados Mockados
 const MOCK_GROUPS = [
-  { id: '1', name: 'Diretoria Executiva', client: 'HALEON', usersCount: 5, type: 'Estratégico' },
-  { id: '2', name: 'Gerentes Regionais', client: 'HALEON', usersCount: 12, type: 'Tático' },
+  { id: '1', name: 'Diretoria Executiva', client: 'Sherwin-Williams', usersCount: 5, type: 'Estratégico' },
+  { id: '2', name: 'Gerentes Regionais', client: 'Sherwin-Williams', usersCount: 12, type: 'Tático' },
   { id: '3', name: 'Time de Trade', client: 'P&G', usersCount: 28, type: 'Operacional' },
   { id: '4', name: 'Marketing Digital', client: 'SEMP TCL', usersCount: 8, type: 'Estratégico' },
 ];
@@ -55,7 +53,6 @@ export function GroupsListView({ onBack }: GroupsListViewProps) {
   const [inputClient, setInputClient] = useState<string>("all");
   const [inputName, setInputName] = useState("");
   
-  // Estado do Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const filteredGroups = MOCK_GROUPS.filter(g => {
@@ -102,7 +99,7 @@ export function GroupsListView({ onBack }: GroupsListViewProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os Clientes</SelectItem>
-              <SelectItem value="HALEON">HALEON</SelectItem>
+              <SelectItem value="Sherwin-Williams">Sherwin-Williams</SelectItem>
               <SelectItem value="P&G">P&G</SelectItem>
               <SelectItem value="SEMP TCL">SEMP TCL</SelectItem>
             </SelectContent>

@@ -83,7 +83,6 @@ export function BroadcastView({
     }
   };
 
-  // Filtrar anúncios baseado no role e company_id
   const visibleAnnouncements = isAdmin
     ? announcements.filter(a => a.active)
     : announcements.filter(a => 
@@ -94,7 +93,6 @@ export function BroadcastView({
         )
       );
 
-  // Ordenar por data (mais recentes primeiro)
   const sortedAnnouncements = [...visibleAnnouncements].sort((a, b) => 
     new Date(b.date).getTime() - new Date(a.date).getTime()
   );

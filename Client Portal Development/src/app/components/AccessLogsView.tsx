@@ -57,9 +57,9 @@ const MOCK_LOGS: LogData[] = [
   {
     id: 'log-001',
     timestamp: '16/01/2026 14:30:45',
-    user: { name: 'Roberto Almeida', email: 'roberto@haleon.com', avatar: 'https://github.com/shadcn.png' },
+    user: { name: 'Roberto Almeida', email: 'roberto@Sherwin-Williams.com', avatar: 'https://github.com/shadcn.png' },
     action: 'Visualizou Relatório',
-    details: 'Comercial Sell-out (HALEON)',
+    details: 'Comercial Sell-out (Sherwin-Williams)',
     type: 'view_report',
     status: 'success',
     ip: '192.168.1.45'
@@ -97,7 +97,7 @@ const MOCK_LOGS: LogData[] = [
   {
     id: 'log-005',
     timestamp: '16/01/2026 10:00:01',
-    user: { name: 'Roberto Almeida', email: 'roberto@haleon.com', avatar: 'https://github.com/shadcn.png' },
+    user: { name: 'Roberto Almeida', email: 'roberto@Sherwin-Williams.com', avatar: 'https://github.com/shadcn.png' },
     action: 'Login no Sistema',
     details: 'Autenticação via Token',
     type: 'login',
@@ -120,7 +120,6 @@ export function AccessLogsView() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Lógica de Filtragem
   const filteredLogs = MOCK_LOGS.filter(log => {
     const matchesStatus = filterStatus === "all" || log.status === filterStatus;
     const matchesSearch = 
@@ -131,7 +130,6 @@ export function AccessLogsView() {
     return matchesStatus && matchesSearch;
   });
 
-  // Renderização de Ícone por Tipo
   const getActionIcon = (type: LogType) => {
     switch (type) {
       case 'login': return <LogIn className="w-4 h-4 text-blue-500" />;
