@@ -5,14 +5,16 @@ import { LoginPage } from "@/app/components/LoginPage";
 import { Sidebar, SidebarView } from "@/app/components/Sidebar";
 import { Toaster } from "@/app/components/ui/sonner";
 
-// Lazy loading
+// Lazy loading dos componentes
 const DashboardsView = lazy(() => import("@/app/components/DashboardsView").then(m => ({ default: m.DashboardsView })));
 const ReportViewer = lazy(() => import("@/app/components/ReportViewer").then(m => ({ default: m.ReportViewer })));
 const ClientsListView = lazy(() => import("@/app/components/ClientsListView").then(m => ({ default: m.ClientsListView })));
 const WorkspacesListView = lazy(() => import("@/app/components/WorkspacesListView").then(m => ({ default: m.WorkspacesListView })));
 const UsersManagementView = lazy(() => import("@/app/components/UsersManagementView").then(m => ({ default: m.UsersManagementView }))); 
-// NOVO IMPORT
 const ReportsManagementView = lazy(() => import("@/app/components/ReportsManagementView").then(m => ({ default: m.ReportsManagementView })));
+
+// NOVO IMPORT: Logs de Acesso
+const AccessLogsView = lazy(() => import("@/app/components/AccessLogsView").then(m => ({ default: m.AccessLogsView })));
 
 function AppContent() {
   const { isAuthenticated, user, loading } = useAuth();
@@ -61,16 +63,15 @@ function AppContent() {
       />
       
       <main className="flex-1 overflow-y-auto bg-slate-50/50">
-        <header className="px-8 py-5 bg-white border-b border-slate-100 sticky top-0 z-10">
+        <header className="px-8 py-5 bg-white border-b border-slate-100 sticky top-0 z-10 shadow-sm">
           <h1 className="text-2xl font-bold text-slate-800 capitalize">
             {activeView === 'reports' ? 'Relatórios de Performance' : 
              activeView === 'register_report' ? 'Gestão de Relatórios' :
              activeView === 'clients' ? 'Gestão de Clientes e Grupos' : 
              activeView === 'workspaces' ? 'Gestão de Workspaces' :
-             activeView === 'logs' ? 'Logs de Auditoria' :
+             activeView === 'logs' ? 'Logs de Auditoria e Segurança' :
              activeView === 'users' ? 'Gerenciamento de Usuários' :
-             
-             activeView}
+             'Painel'}
           </h1>
         </header>
 
@@ -100,9 +101,12 @@ function AppContent() {
             {/* 4. CLIENTES E GRUPOS */}
             {activeView === 'clients' && <ClientsListView />}
             
-
-            {/* 6. GESTÃO DE USUÁRIOS */}
+            {/* 5. GESTÃO DE USUÁRIOS */}
             {activeView === 'users' && <UsersManagementView />} 
+
+            {/* 6. LOGS DE ACESSO (NOVO) */}
+            {activeView === 'logs' && <AccessLogsView />}
+
           </Suspense>
         </div>
       </main>
