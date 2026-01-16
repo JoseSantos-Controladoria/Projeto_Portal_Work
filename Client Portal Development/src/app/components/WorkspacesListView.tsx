@@ -8,8 +8,7 @@ import {
   XCircle,
   Layout,
   ExternalLink,
-  Copy,
-  Globe
+  Copy
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -36,21 +35,21 @@ import {
   TooltipTrigger,
 } from "@/app/components/ui/tooltip";
 
-// Nova Interface focada em Negócio
+import { WorkspaceRegistrationModal } from "./WorkspaceRegistrationModal";
+
+// Interface Atualizada (Sem ID técnico)
 interface WorkspaceData {
   id: string;
-  pbiId: string;
   name: string;
   clientName: string;
-  description: string; // Nova
-  url: string; // Nova
+  description: string;
+  url: string;
 }
 
-// Dados Mockados Atualizados (HALEON, P&G, SEMP TCL)
+// Dados Mockados Atualizados
 const MOCK_WORKSPACES: WorkspaceData[] = [
   { 
     id: '1', 
-    pbiId: '89b2-33a1', 
     name: 'Comercial Sell-out', 
     clientName: 'HALEON', 
     description: 'Relatórios de performance de vendas, ruptura e estoque nas principais redes farma.',
@@ -58,7 +57,6 @@ const MOCK_WORKSPACES: WorkspaceData[] = [
   },
   { 
     id: '2', 
-    pbiId: '77a1-22b3', 
     name: 'Executivo & Diretoria', 
     clientName: 'HALEON', 
     description: 'Dashboards consolidados para tomada de decisão estratégica (DRE, P&L).',
@@ -66,7 +64,6 @@ const MOCK_WORKSPACES: WorkspaceData[] = [
   },
   { 
     id: '3', 
-    pbiId: '55c3-11e2', 
     name: 'Vendas Varejo', 
     clientName: 'SEMP TCL', 
     description: 'Monitoramento de sell-out nos grandes varejistas (Magalu, Via, Fast).',
@@ -74,7 +71,6 @@ const MOCK_WORKSPACES: WorkspaceData[] = [
   },
   { 
     id: '4', 
-    pbiId: '33d4-55f6', 
     name: 'Trade Marketing', 
     clientName: 'P&G', 
     description: 'Acompanhamento de execução em loja, planograma e materiais de merchandising.',
@@ -86,6 +82,7 @@ export function WorkspacesListView() {
   const [inputClient, setInputClient] = useState<string>("all");
   const [inputName, setInputName] = useState("");
   const [appliedFilters, setAppliedFilters] = useState({ client: "all", name: "" });
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleSearch = () => {
     setAppliedFilters({ client: inputClient, name: inputName });
@@ -105,7 +102,6 @@ export function WorkspacesListView() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    // Aqui poderia entrar um toast de sucesso
   };
 
   return (
@@ -125,7 +121,10 @@ export function WorkspacesListView() {
         </div>
         
         <div className="flex gap-2 w-full md:w-auto">
-          <Button className="bg-amber-600 hover:bg-amber-700 text-white flex-1 md:flex-none">
+          <Button 
+            className="bg-amber-600 hover:bg-amber-700 text-white flex-1 md:flex-none"
+            onClick={() => setIsModalOpen(true)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Novo Workspace
           </Button>
@@ -176,7 +175,7 @@ export function WorkspacesListView() {
         </div>
       </div>
 
-      {/* Tabela Atualizada */}
+      {/* Tabela */}
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
@@ -194,23 +193,18 @@ export function WorkspacesListView() {
                 <TableRow key={ws.id} className="hover:bg-slate-50/50">
                   <TableCell>
                     <div className="font-semibold text-slate-800">{ws.name}</div>
-                    <div className="text-xs text-slate-400 font-mono mt-1">ID: {ws.pbiId}</div>
+                    {/* ID Removido daqui */}
                   </TableCell>
-                  
                   <TableCell>
                     <Badge variant="outline" className="font-normal text-slate-600 bg-slate-50">
                       {ws.clientName}
                     </Badge>
                   </TableCell>
-                  
-                  {/* Coluna Descrição */}
                   <TableCell>
                     <p className="text-sm text-slate-600 line-clamp-2" title={ws.description}>
                       {ws.description}
                     </p>
                   </TableCell>
-
-                  {/* Coluna URL */}
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <TooltipProvider>
@@ -250,7 +244,6 @@ export function WorkspacesListView() {
                       </span>
                     </div>
                   </TableCell>
-
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-orange-600">
@@ -273,6 +266,11 @@ export function WorkspacesListView() {
           </TableBody>
         </Table>
       </div>
+
+      <WorkspaceRegistrationModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+      />
     </div>
   );
 }
