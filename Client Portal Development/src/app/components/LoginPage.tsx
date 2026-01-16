@@ -5,57 +5,9 @@ import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { 
   Loader2, 
-  LogIn, 
-  Store, 
-  ShoppingCart, 
-  TrendingUp, 
-  Package, 
-  Tag, 
-  Megaphone, 
-  BarChart3, 
-  Truck, 
-  Users, 
-  ClipboardCheck, 
-  QrCode, 
-  ScanBarcode, 
-  ShoppingBag, 
-  Percent
+  LogIn
 } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/app/components/ui/card";
-
-const TRADE_ICONS = [
-  Store, ShoppingCart, TrendingUp, Package, Tag, Megaphone, 
-  BarChart3, Truck, Users, ClipboardCheck, QrCode, ScanBarcode, ShoppingBag, Percent
-];
-
-const IconMarquee = ({ reverse = false, duration = "40s" }: { reverse?: boolean, duration?: string }) => {
-  return (
-    // AJUSTE CRÍTICO: Mudei opacity-[0.15] para opacity-40 (Bem mais visível)
-    <div className="flex overflow-hidden py-4 select-none opacity-40 pointer-events-none">
-      <div 
-        className="flex gap-16 shrink-0 items-center justify-around min-w-full"
-        style={{
-          animation: `marquee${reverse ? '-reverse' : ''} ${duration} linear infinite`
-        }}
-      >
-        {[...TRADE_ICONS, ...TRADE_ICONS, ...TRADE_ICONS].map((Icon, idx) => (
-          // Ícones em Azul Vibrante (blue-600)
-          <Icon key={idx} className="w-14 h-14 text-blue-600" />
-        ))}
-      </div>
-      <div 
-        className="flex gap-16 shrink-0 items-center justify-around min-w-full"
-        style={{
-          animation: `marquee${reverse ? '-reverse' : ''} ${duration} linear infinite`
-        }}
-      >
-        {[...TRADE_ICONS, ...TRADE_ICONS, ...TRADE_ICONS].map((Icon, idx) => (
-          <Icon key={`dup-${idx}`} className="w-14 h-14 text-blue-600" />
-        ))}
-      </div>
-    </div>
-  );
-};
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -80,30 +32,6 @@ export function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 relative overflow-hidden">
       
-      <style>{`
-        @keyframes marquee {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-100%); }
-        }
-        @keyframes marquee-reverse {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(0); }
-        }
-      `}</style>
-
-      {/* BACKGROUND ANIMADO */}
-      <div className="absolute inset-0 flex flex-col justify-center -rotate-6 scale-110 z-0">
-        <IconMarquee duration="60s" />
-        <IconMarquee reverse duration="50s" />
-        <IconMarquee duration="70s" />
-        <IconMarquee reverse duration="55s" />
-        <IconMarquee duration="80s" />
-      </div>
-
-      {/* Máscara de Gradiente (Mantida para focar o centro, mas o fundo está mais forte agora) */}
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-50/80 via-slate-50/40 to-slate-50/80 z-0 pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-r from-slate-50/80 via-transparent to-slate-50/80 z-0 pointer-events-none" />
-
       {/* CARD DE LOGIN */}
       <Card className="w-full max-w-md shadow-2xl border-white/50 bg-white/95 backdrop-blur-xl relative z-10 animate-in fade-in zoom-in duration-500">
         <CardHeader className="space-y-6 flex flex-col items-center pt-10 pb-6">
