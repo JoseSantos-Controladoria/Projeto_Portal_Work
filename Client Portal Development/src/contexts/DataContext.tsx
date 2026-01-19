@@ -12,7 +12,7 @@ export interface Dashboard {
   company_id: string;
   thumbnail?: string;
   description: string;
-  last_update: string;
+  last_updated: string; // CORRIGIDO: Renomeado para last_updated (com 'd')
   tags: string[];
   type: 'Power BI' | 'Excel' | 'PDF';
   is_favorite: boolean;
@@ -32,25 +32,25 @@ const MOCK_COMPANIES: Company[] = [
   { id: 'sherwin', name: 'Sherwin-Williams', logo: '/logos/sherwin.png' }
 ];
 
+// DATAS CORRIGIDAS PARA FORMATO ISO (YYYY-MM-DD)
 const INITIAL_DASHBOARDS: Dashboard[] = [
-
   {
     id: '1',
     title: 'Performance de Vendas - Janeiro',
     company_id: 'haleon',
     description: 'Análise detalhada das vendas do mês de janeiro por categoria e região.',
-    last_update: '13 de jan',
+    last_updated: '2026-01-13T10:00:00', // Formato ISO
     tags: ['Vendas', 'Executivo'],
     type: 'Power BI',
     is_favorite: true,
-    embedUrl: 'https://app.powerbi.com/view?r=eyJrIjoiYWNlNGRjMmUtOTNjNy00NmUxLWIxNTItYzIwZDEzMmVhZDQ5IiwidCI6ImI1MGFkYzllLTQ5YjEtNDQxNy1hM2I1LTljNzFiZDNmMmMyZCJ9' // Exemplo
+    embedUrl: 'https://app.powerbi.com/view?r=eyJrIjoiYWNlNGRjMmUtOTNjNy00NmUxLWIxNTItYzIwZDEzMmVhZDQ5IiwidCI6ImI1MGFkYzllLTQ5YjEtNDQxNy1hM2I1LTljNzFiZDNmMmMyZCJ9'
   },
   {
     id: '2',
     title: 'Ruptura de Estoque',
     company_id: 'haleon',
     description: 'Monitoramento em tempo real de rupturas e oportunidades de reposição.',
-    last_update: '13 de jan',
+    last_updated: '2026-01-13T14:30:00',
     tags: ['Logística', 'Trade'],
     type: 'Power BI',
     is_favorite: false
@@ -60,7 +60,7 @@ const INITIAL_DASHBOARDS: Dashboard[] = [
     title: 'ROI de Campanhas Promocionais',
     company_id: 'semptcl',
     description: 'Análise de retorno sobre investimento em ações de trade marketing.',
-    last_update: '12 de jan',
+    last_updated: '2026-01-12T09:15:00',
     tags: ['Marketing', 'Financeiro'],
     type: 'Power BI',
     is_favorite: false
@@ -70,7 +70,7 @@ const INITIAL_DASHBOARDS: Dashboard[] = [
     title: 'Execução no PDV',
     company_id: 'pg',
     description: 'Compliance de execução de materiais de ponto de venda e planograma.',
-    last_update: '10 de jan',
+    last_updated: '2026-01-10T11:00:00',
     tags: ['Trade', 'Operacional'],
     type: 'Power BI',
     is_favorite: true
@@ -81,7 +81,7 @@ const INITIAL_DASHBOARDS: Dashboard[] = [
     title: 'Resumo Gerencial', 
     company_id: 'sherwin', 
     description: 'Visão consolidada dos principais KPIs de vendas, atingimento de metas e performance do canal farma.',
-    last_update: '15 de jan', 
+    last_updated: '2026-01-15T16:00:00', 
     tags: ['Vendas', 'Farma'], 
     type: 'Power BI',
     is_favorite: true,
@@ -92,7 +92,7 @@ const INITIAL_DASHBOARDS: Dashboard[] = [
     title: 'Status Day (Produtividade)', 
     company_id: 'sherwin', 
     description: 'Acompanhamento diário de produtividade logística, SLA de entregas e eficiência da cadeia de supply.',
-    last_update: '14 de jan', 
+    last_updated: '2026-01-14T08:00:00', 
     tags: ['Logística'], 
     type: 'Power BI',
     is_favorite: false,
@@ -103,7 +103,7 @@ const INITIAL_DASHBOARDS: Dashboard[] = [
     title: 'Ruptura de Gôndola', 
     company_id: 'sherwin', 
     description: 'Indicadores de ruptura física e virtual focados na categoria de Hair Care e Trade Marketing.',
-    last_update: '10 de jan', 
+    last_updated: '2026-01-10T13:45:00', 
     tags: ['Trade', 'Hair Care'], 
     type: 'Power BI',
     is_favorite: false,
@@ -114,7 +114,7 @@ const INITIAL_DASHBOARDS: Dashboard[] = [
     title: 'Monitoramento de Preços', 
     company_id: 'sherwin', 
     description: 'Análise de pricing e competitividade de preços no varejo (foco em TVs e Eletro).',
-    last_update: '12 de jan', 
+    last_updated: '2026-01-12T10:20:00', 
     tags: ['Varejo', 'TVs'], 
     type: 'Power BI',
     is_favorite: false,
@@ -125,7 +125,7 @@ const INITIAL_DASHBOARDS: Dashboard[] = [
     title: 'Ponto Extra',
     company_id: 'sherwin',
     description: 'Mapeamento de pontos extras negociados, execução em loja e conformidade de merchandising.',
-    last_update: '08 de jan',
+    last_updated: '2026-01-08T09:00:00',
     tags: ['Mercado', 'Eletro'],
     type: 'Power BI', 
     is_favorite: false,
@@ -136,7 +136,7 @@ const INITIAL_DASHBOARDS: Dashboard[] = [
     title: 'Share de Mercado',
     company_id: 'sherwin',
     description: 'Relatório mensal de Market Share e impacto das campanhas de marketing digital.',
-    last_update: '11 de jan',
+    last_updated: '2026-01-11T15:30:00',
     tags: ['Marketing', 'Campanhas'],
     type: 'Power BI', 
     is_favorite: false,
@@ -147,7 +147,7 @@ const INITIAL_DASHBOARDS: Dashboard[] = [
     title: 'Sellout Performance', 
     company_id: 'sherwin', 
     description: 'Deep dive em dados de sell-out por região, vendedor e categoria de produtos.',
-    last_update: '15 de jan', 
+    last_updated: '2026-01-15T17:00:00', 
     tags: ['Vendas', 'Farma'], 
     type: 'Power BI',
     is_favorite: false,
