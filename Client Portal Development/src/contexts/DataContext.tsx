@@ -12,7 +12,7 @@ export interface Dashboard {
   company_id: string;
   thumbnail?: string;
   description: string;
-  last_updated: string; // CORRIGIDO: Renomeado para last_updated (com 'd')
+  last_updated: string; 
   tags: string[];
   type: 'Power BI' | 'Excel' | 'PDF';
   is_favorite: boolean;
@@ -32,14 +32,13 @@ const MOCK_COMPANIES: Company[] = [
   { id: 'sherwin', name: 'Sherwin-Williams', logo: '/logos/sherwin.png' }
 ];
 
-// DATAS CORRIGIDAS PARA FORMATO ISO (YYYY-MM-DD)
 const INITIAL_DASHBOARDS: Dashboard[] = [
   {
     id: '1',
     title: 'Performance de Vendas - Janeiro',
     company_id: 'haleon',
     description: 'Análise detalhada das vendas do mês de janeiro por categoria e região.',
-    last_updated: '2026-01-13T10:00:00', // Formato ISO
+    last_updated: '2026-01-13T10:00:00', 
     tags: ['Vendas', 'Executivo'],
     type: 'Power BI',
     is_favorite: true,
