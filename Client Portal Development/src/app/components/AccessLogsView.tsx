@@ -52,7 +52,6 @@ interface LogData {
   ip: string;
 }
 
-// Dados Mockados de Auditoria
 const MOCK_LOGS: LogData[] = [
   {
     id: 'log-001',

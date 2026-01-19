@@ -10,16 +10,14 @@ import { Dashboard } from "@/contexts/DataContext";
 
 interface ReportViewerProps {
   dashboardId: string;
-  dashboard?: Dashboard; // Recebe o objeto completo do dashboard
+  dashboard?: Dashboard; 
   onBack: () => void;
 }
 
 export function ReportViewer({ dashboard, onBack }: ReportViewerProps) {
   
-  // Se não houver dashboard selecionado, não renderiza nada
   if (!dashboard) return null;
 
-  // URL segura para o iframe (prioriza o embedUrl do banco, senão fica vazio)
   const reportUrl = dashboard.embedUrl || "";
 
   return (
@@ -75,7 +73,7 @@ export function ReportViewer({ dashboard, onBack }: ReportViewerProps) {
       {/* Área do Conteúdo (Iframe) */}
       <div className="flex-1 p-6 overflow-hidden flex flex-col items-center justify-center relative">
         
-        {/* LÓGICA DE EXIBIÇÃO: Se tiver URL, mostra o Iframe. Se não, mostra o Placeholder */}
+        {/* Placeholder */}
         {reportUrl ? (
           <div className="w-full h-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative flex-1 min-h-[600px]">
             <iframe 

@@ -7,7 +7,6 @@ import {
   Loader2, 
   LogIn
 } from "lucide-react";
-import { Card, CardContent, CardFooter, CardHeader } from "@/app/components/ui/card";
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -33,28 +32,28 @@ export function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 relative overflow-hidden">
       
       {/* CARD DE LOGIN */}
-      <Card className="w-full max-w-md shadow-2xl border-white/50 bg-white/95 backdrop-blur-xl relative z-10 animate-in fade-in zoom-in duration-500">
-        <CardHeader className="space-y-6 flex flex-col items-center pt-10 pb-6">
-          
-          <div className="relative w-24 h-24 flex items-center justify-center p-1">
-            <img 
-              src="/images/work-on.png" 
-              alt="Logo Work On" 
-              className="w-full h-full object-contain"
-            />
-          </div>
+      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-100 relative z-10">
+        
+        {/* --- BLOCO DA LOGO SIMPLIFICADO --- */}
+        <div className="flex flex-col items-center justify-center mb-10">
+          <img 
+            src="/images/logo-blue.png" 
+            alt="Logo Work On" 
+            className="h-20 w-auto object-contain"
+          />
+        </div>
+        {/* ---------------------------------- */}
 
-          <div className="text-center space-y-2">
+        <div className="space-y-6">
+          <div className="space-y-2 text-center">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Portal Work On
+              Bem-vindo ao Portal BI
             </h1>
-            <p className="text-sm text-slate-500 font-medium">
-              Intelligence & Trade Marketing
+            <p className="text-sm text-slate-500">
+              Insira suas credenciais para acessar
             </p>
           </div>
-        </CardHeader>
 
-        <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-slate-700">E-mail Corporativo</Label>
@@ -111,14 +110,14 @@ export function LoginPage() {
               )}
             </Button>
           </form>
-        </CardContent>
+        </div>
 
-        <CardFooter className="flex justify-center pb-8 pt-2">
+        <div className="flex justify-center pb-2 pt-8">
           <p className="text-xs text-slate-400 font-medium">
             &copy; 2026 Work On. Todos os direitos reservados.
           </p>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

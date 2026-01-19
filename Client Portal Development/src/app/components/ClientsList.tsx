@@ -1,13 +1,10 @@
 import { useState } from "react";
 import { 
   Search, 
-  Building2, 
-  Users, 
-  ArrowRight,
   ArrowLeft,
   MoreVertical,
   BarChart3,
-  ExternalLink
+  Users
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -16,7 +13,6 @@ import {
   Card, 
   CardContent, 
   CardDescription, 
-  CardFooter, 
   CardHeader, 
   CardTitle 
 } from "@/app/components/ui/card";
@@ -65,10 +61,9 @@ const MOCK_CLIENTS: ClientData[] = [
 
 interface ClientsListProps {
   onBack: () => void;
-  onSelectClient: (client: ClientData) => void;
 }
 
-export function ClientsList({ onBack, onSelectClient }: ClientsListProps) {
+export function ClientsList({ onBack }: ClientsListProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredClients = MOCK_CLIENTS.filter(client => 
@@ -86,7 +81,7 @@ export function ClientsList({ onBack, onSelectClient }: ClientsListProps) {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Carteira de Clientes</h1>
-            <p className="text-slate-500 text-sm">Visualize e acesse os ambientes de cada cliente</p>
+            <p className="text-slate-500 text-sm">Visualize os ambientes de cada cliente</p>
           </div>
         </div>
         
@@ -107,8 +102,7 @@ export function ClientsList({ onBack, onSelectClient }: ClientsListProps) {
           {filteredClients.map((client) => (
             <Card 
               key={client.id} 
-              className="group hover:shadow-lg transition-all duration-300 border-slate-200 cursor-pointer overflow-hidden flex flex-col"
-              onClick={() => onSelectClient(client)}
+              className="border-slate-200 overflow-hidden flex flex-col hover:shadow-md transition-shadow"
             >
               <div className={`h-2 w-full ${client.logoColor}`} />
               
@@ -119,22 +113,24 @@ export function ClientsList({ onBack, onSelectClient }: ClientsListProps) {
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
+                      {/* Botão de menu continua funcional para gestão (editar/excluir) */}
                       <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 text-slate-400 hover:text-slate-600">
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenuItem>
                         Editar Cliente
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => e.stopPropagation()} className="text-red-600">
+                      <DropdownMenuItem className="text-red-600">
                         Desativar
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
                 
-                <CardTitle className="text-lg font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
+                {/* Título agora é estático (sem cor azul no hover) */}
+                <CardTitle className="text-lg font-bold text-slate-800">
                   {client.name}
                 </CardTitle>
                 <CardDescription className="line-clamp-2 h-10 mt-1">
@@ -142,7 +138,7 @@ export function ClientsList({ onBack, onSelectClient }: ClientsListProps) {
                 </CardDescription>
               </CardHeader>
 
-              <CardContent className="flex-1">
+              <CardContent className="flex-1 pb-6">
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-sm text-slate-600">
                     <BarChart3 className="w-4 h-4 text-slate-400" />
@@ -156,7 +152,7 @@ export function ClientsList({ onBack, onSelectClient }: ClientsListProps) {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {client.groups.map((group, idx) => (
-                        <Badge key={idx} variant="secondary" className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-normal">
+                        <Badge key={idx} variant="secondary" className="bg-slate-100 text-slate-600 font-normal">
                           {group}
                         </Badge>
                       ))}
@@ -165,15 +161,7 @@ export function ClientsList({ onBack, onSelectClient }: ClientsListProps) {
                 </div>
               </CardContent>
 
-              <CardFooter className="pt-4 border-t border-slate-50 bg-slate-50/50 flex justify-between items-center group/footer">
-                <span className="text-xs text-slate-400 font-medium">
-                  Clique para visualizar
-                </span>
-                <div className="flex items-center text-blue-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0">
-                  Acessar Dashboards
-                  <ArrowRight className="w-4 h-4 ml-1" />
-                </div>
-              </CardFooter>
+              {/* REMOVIDO: CardFooter com "Acessar Dashboards" */}
             </Card>
           ))}
         </div>

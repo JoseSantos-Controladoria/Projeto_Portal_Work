@@ -47,26 +47,22 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   };
 
   return (
-    <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col h-screen transition-all duration-300 shadow-xl z-50 border-r border-slate-800">
+    <aside className="w-72 bg-slate-900 text-slate-300 flex flex-col h-screen transition-all duration-300 shadow-xl z-50 border-r border-slate-800">
       
-{/* --- HEADER COM LOGO --- */}
-<div className="p-6 flex items-center gap-3 border-b border-slate-800/50">
-  
-  <div className="relative w-10 h-10 flex items-center justify-center">
-    <img 
-      src="/images/work-on.png" 
-      alt="Logo Work On" 
-      className="w-full h-full object-contain" 
-    />
-  </div>
+      {/* --- CABEÇALHO --- */}
+      <div className="px-6 pt-8 pb-8 flex flex-col items-start">
 
-  <div>
-    <h2 className="font-bold text-white tracking-tight leading-tight">Portal Work</h2>
-    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">
-      Work On • BI
-    </p>
-  </div>
-</div>
+        <img 
+          src="/images/logo-white.png" 
+          alt="Work On Logo" 
+          className="h-14 w-auto max-w-[85%] object-contain mb-3 opacity-100" 
+        />
+        
+        <p className="text-xs font-medium text-slate-400 tracking-wide pl-1">
+          Inteligência & Inovação
+          <br />
+        </p>
+      </div>
 
       {/* Navegação Principal */}
       <nav className="flex-1 px-4 py-6 overflow-y-auto custom-scrollbar space-y-8">
