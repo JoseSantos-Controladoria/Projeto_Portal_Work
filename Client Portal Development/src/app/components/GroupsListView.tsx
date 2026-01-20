@@ -21,48 +21,54 @@ import {
 } from "@/app/components/ui/table";
 import { Badge } from "@/app/components/ui/badge";
 
+// 1. IMPORTAMOS O MODAL
+import { GroupRegistrationModal } from "./GroupRegistrationModal";
+
 interface GroupsListViewProps {
   onBack: () => void;
 }
 
-// Dados Mockados de Grupos
+// Dados Mockados de Grupos (Sua estrutura original)
 const MOCK_GROUPS = [
   { 
     id: '1', 
     name: 'Comercial Sell-out', 
-    client: 'Sherwin-Williams',
-    users: 12,
-    role: 'Visualizador',
-    status: 'active'
+    client: 'Sherwin-Williams', 
+    users: 12, 
+    role: 'Visualizador', 
+    status: 'active' 
   },
   { 
     id: '2', 
     name: 'Trade Marketing', 
-    client: 'Sherwin-Williams',
-    users: 8,
-    role: 'Editor',
-    status: 'active'
+    client: 'Sherwin-Williams', 
+    users: 8, 
+    role: 'Editor', 
+    status: 'active' 
   },
   { 
     id: '3', 
     name: 'Gerência Regional', 
-    client: 'HALEON',
-    users: 5,
-    role: 'Admin',
-    status: 'active'
+    client: 'HALEON', 
+    users: 5, 
+    role: 'Admin', 
+    status: 'active' 
   },
   { 
     id: '4', 
     name: 'Operacional Loja', 
-    client: 'SEMP TCL',
-    users: 24,
-    role: 'Visualizador',
-    status: 'inactive'
+    client: 'SEMP TCL', 
+    users: 24, 
+    role: 'Visualizador', 
+    status: 'inactive' 
   },
 ];
 
 export function GroupsListView({ onBack }: GroupsListViewProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // 2. ESTADO PARA ABRIR/FECHAR O MODAL
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
   const filteredGroups = MOCK_GROUPS.filter(group => 
     group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -86,7 +92,11 @@ export function GroupsListView({ onBack }: GroupsListViewProps) {
           </div>
         </div>
         
-        <Button className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-900/20">
+        {/* 3. BOTÃO COM AÇÃO DE CLIQUE */}
+        <Button 
+          onClick={() => setIsRegisterModalOpen(true)}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-900/20"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Novo Grupo
         </Button>
@@ -109,7 +119,7 @@ export function GroupsListView({ onBack }: GroupsListViewProps) {
         </Button>
       </div>
 
-      {/* Tabela de Grupos */}
+      {/* Tabela de Grupos (Sem alterações visuais) */}
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
@@ -162,7 +172,6 @@ export function GroupsListView({ onBack }: GroupsListViewProps) {
                     </span>
                   </TableCell>
 
-                  {/* AÇÕES: Botões Diretos na Linha (Sem Menu Dropdown) */}
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Button 
@@ -196,6 +205,13 @@ export function GroupsListView({ onBack }: GroupsListViewProps) {
           </TableBody>
         </Table>
       </div>
+
+      {/* 4. COMPONENTE DO MODAL SENDO RENDERIZADO */}
+      <GroupRegistrationModal 
+        isOpen={isRegisterModalOpen} 
+        onClose={() => setIsRegisterModalOpen(false)} 
+      />
+
     </div>
   );
 }

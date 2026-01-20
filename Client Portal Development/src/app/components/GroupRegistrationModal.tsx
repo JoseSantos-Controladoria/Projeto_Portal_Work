@@ -1,23 +1,19 @@
 import { useState } from "react";
 import { 
   Users, 
+  Shield, 
   Building2, 
-  AlignLeft, 
-  CheckCircle2, 
-  Loader2,
-  Tag,
   Search,
   UserPlus,
-  Check,
-  LayoutGrid
+  CheckCircle2
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
-import { Textarea } from "@/app/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -29,36 +25,49 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/components/ui/select";
+import { Checkbox } from "@/app/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar";
-import { Badge } from "@/app/components/ui/badge";
-
-const MOCK_AVAILABLE_USERS = [
-  { id: 'u1', name: 'Roberto Almeida', email: 'roberto@Sherwin-Williams.com', role: 'Analista', avatar: 'https://github.com/shadcn.png' },
-  { id: 'u2', name: 'Fernanda Costa', email: 'fernanda@pg.com', role: 'Gerente', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024d' },
-  { id: 'u3', name: 'Juliana Silva', email: 'juliana@semptcl.com', role: 'Analista', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d' },
-  { id: 'u4', name: 'Ricardo Oliveira', email: 'ricardo@Sherwin-Williams.com', role: 'Diretor', avatar: '' },
-  { id: 'u5', name: 'Amanda Souza', email: 'amanda@workon.com', role: 'Admin', avatar: '' },
-  { id: 'u6', name: 'Carlos Lima', email: 'carlos@pg.com', role: 'Analista', avatar: '' },
-  { id: 'u7', name: 'Ana Paula', email: 'ana@semptcl.com', role: 'Gerente', avatar: '' },
-];
 
 interface GroupRegistrationModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+// Mock de usuários
+const USERS_AVAILABLE = [
+  { id: '1', name: 'Roberto Almeida', email: 'roberto@workon.com', avatar: '' },
+  { id: '2', name: 'Fernanda Costa', email: 'fernanda@instore.com', avatar: '' },
+  { id: '3', name: 'Juliana Silva', email: 'juliana@haleon.com', avatar: '' },
+  { id: '4', name: 'Ricardo Oliveira', email: 'ricardo@pg.com', avatar: '' },
+  { id: '5', name: 'Carlos System', email: 'admin@portal.com', avatar: '' },
+  { id: '6', name: 'Ana Souza', email: 'ana@sherwin.com', avatar: '' },
+  { id: '7', name: 'Marcos Paulo', email: 'marcos@semptcl.com', avatar: '' },
+  { id: '8', name: 'Patrícia Gomes', email: 'patricia@workon.com', avatar: '' },
+  { id: '9', name: 'Lucas Fernandes', email: 'lucas@instore.com', avatar: '' },
+  { id: '10', name: 'Isabela Santos', email: 'isabela@haleon.com', avatar: '' },
+  { id: '11', name: 'Gustavo Lima', email: 'gustavo@pg.com', avatar: '' }, 
+  { id: '12', name: 'Mariana Ribeiro', email: 'mariana@sherwin.com', avatar: '' },
+
+];
+
 export function GroupRegistrationModal({ isOpen, onClose }: GroupRegistrationModalProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  
   const [formData, setFormData] = useState({
     name: "",
-    clientName: "",
-    type: "",
-    description: ""
+    client: "",
+    role: "Visualizador",
+    status: "active"
   });
 
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [userSearch, setUserSearch] = useState("");
+
+  const handleSave = () => {
+    console.log("Criando Grupo:", { ...formData, members: selectedUsers });
+    onClose();
+    setFormData({ name: "", client: "", role: "Visualizador", status: "active" });
+    setSelectedUsers([]);
+    setUserSearch("");
+  };
 
   const toggleUser = (userId: string) => {
     setSelectedUsers(prev => 
@@ -66,209 +75,175 @@ export function GroupRegistrationModal({ isOpen, onClose }: GroupRegistrationMod
     );
   };
 
-  const filteredUsers = MOCK_AVAILABLE_USERS.filter(user => 
+  const filteredUsers = USERS_AVAILABLE.filter(user => 
     user.name.toLowerCase().includes(userSearch.toLowerCase()) || 
     user.email.toLowerCase().includes(userSearch.toLowerCase())
   );
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    console.log("Novo Grupo:", { ...formData, members: selectedUsers });
-    setIsLoading(false);
-    onClose();
-    setSelectedUsers([]);
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      {/* Modal Widescreen (900px) */}
-      <DialogContent className="sm:max-w-[900px] p-0 overflow-hidden gap-0">
-        
-        {/* Header */}
-        <DialogHeader className="p-6 pb-4 border-b border-slate-100 bg-slate-50/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-100 rounded-lg">
-              <LayoutGrid className="w-5 h-5 text-emerald-600" />
-            </div>
-            <div>
-              <DialogTitle className="text-xl font-bold text-slate-900">Novo Grupo de Acesso</DialogTitle>
-              <p className="text-sm text-slate-500 mt-1">Configure os dados do grupo e selecione os participantes.</p>
-            </div>
-          </div>
+      <DialogContent className="sm:max-w-[900px] bg-white overflow-hidden">
+        <DialogHeader className="px-2">
+          <DialogTitle className="text-xl">Novo Grupo de Acesso</DialogTitle>
+          <DialogDescription>
+            Preencha os detalhes do grupo à esquerda e selecione os membros à direita.
+          </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid md:grid-cols-12 h-[550px]">
-            
-            {/* COLUNA ESQUERDA: Configurações (5/12) */}
-            <div className="md:col-span-5 p-6 border-r border-slate-100 space-y-6 overflow-y-auto">
+        {/* LAYOUT DE 2 COLUNAS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4 px-2">
+          
+          {/*OLUNA ESQUERDA*/}
+          <div className="space-y-5 bg-slate-50 p-5 rounded-xl border border-slate-100 h-full">
+            <div>
+              <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <Users className="w-5 h-5 text-blue-600" />
+                Dados do Grupo
+              </h3>
+              
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                  <Users className="w-4 h-4 text-slate-500" /> Dados do Grupo
-                </h3>
-                
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nome do Grupo</Label>
-                    <Input 
-                      id="name" 
-                      placeholder="Ex: Diretoria Executiva" 
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="client">Cliente</Label>
-                    <Select 
-                      value={formData.clientName} 
-                      onValueChange={(val) => setFormData({...formData, clientName: val})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Sherwin-Williams">Sherwin-Williams</SelectItem>
-                        <SelectItem value="P&G">P&G</SelectItem>
-                        <SelectItem value="SEMP TCL">SEMP TCL</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="type">Tipo</Label>
-                    <Select 
-                      value={formData.type} 
-                      onValueChange={(val) => setFormData({...formData, type: val})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Categoria..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Departamental">Departamental</SelectItem>
-                        <SelectItem value="Projeto">Projeto Específico</SelectItem>
-                        <SelectItem value="Geográfico">Regional / Geográfico</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="desc">Descrição</Label>
-                    <Textarea 
-                      id="desc" 
-                      placeholder="Quem deve estar neste grupo?" 
-                      className="resize-none h-32 text-sm"
-                      value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    />
-                  </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="name" className="text-slate-700">Nome do Grupo</Label>
+                  <Input 
+                    id="name" 
+                    className="bg-white"
+                    placeholder="Ex: Comercial - Liderança" 
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  />
                 </div>
-              </div>
-            </div>
 
-            {/* COLUNA DIREITA: Membros (7/12) */}
-            <div className="md:col-span-7 p-6 bg-slate-50/30 flex flex-col h-full">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                  <UserPlus className="w-4 h-4 text-slate-500" /> Adicionar Membros
-                </h3>
-                <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">
-                  {selectedUsers.length} selecionado(s)
-                </Badge>
-              </div>
+                <div className="grid gap-2">
+                  <Label className="text-slate-700">Cliente Vinculado</Label>
+                  <Select value={formData.client} onValueChange={(val) => setFormData({...formData, client: val})}>
+                    <SelectTrigger className="bg-white">
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <Building2 className="w-4 h-4 text-slate-400" />
+                        <SelectValue placeholder="Selecione..." />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Sherwin-Williams">Sherwin-Williams</SelectItem>
+                      <SelectItem value="HALEON">HALEON</SelectItem>
+                      <SelectItem value="P&G">P&G</SelectItem>
+                      <SelectItem value="SEMP TCL">SEMP TCL</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              {/* Busca */}
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input 
-                  placeholder="Buscar usuário por nome ou email..." 
-                  className="pl-9 bg-white"
-                  value={userSearch}
-                  onChange={(e) => setUserSearch(e.target.value)}
-                />
-              </div>
-
-              {/* Lista com Scroll Ocupando o Resto da Altura */}
-              <div className="flex-1 border border-slate-200 rounded-lg bg-white overflow-hidden flex flex-col">
-                <div className="overflow-y-auto custom-scrollbar flex-1 p-1">
-                  {filteredUsers.length > 0 ? (
-                    <div className="space-y-1">
-                      {filteredUsers.map((user) => {
-                        const isSelected = selectedUsers.includes(user.id);
-                        return (
-                          <div 
-                            key={user.id} 
-                            className={`flex items-center justify-between p-3 rounded-md cursor-pointer transition-all border ${
-                              isSelected 
-                                ? 'bg-emerald-50 border-emerald-200 shadow-sm' 
-                                : 'bg-white border-transparent hover:bg-slate-50 hover:border-slate-100'
-                            }`}
-                            onClick={() => toggleUser(user.id)}
-                          >
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-9 w-9 border border-slate-100">
-                                <AvatarImage src={user.avatar} />
-                                <AvatarFallback className="text-xs bg-slate-100 text-slate-600 font-bold">
-                                  {user.name.charAt(0)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <p className={`text-sm font-medium ${isSelected ? 'text-emerald-900' : 'text-slate-700'}`}>
-                                  {user.name}
-                                </p>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs text-slate-500">{user.email}</span>
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
-                                    {user.role}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${
-                              isSelected 
-                                ? 'bg-emerald-500 border-emerald-500 scale-100' 
-                                : 'border-slate-300 bg-white group-hover:border-slate-400'
-                            }`}>
-                              {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-slate-400">
-                      <Search className="w-8 h-8 mb-2 opacity-20" />
-                      <p className="text-sm">Nenhum usuário encontrado</p>
-                    </div>
-                  )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label className="text-slate-700">Permissão Padrão</Label>
+                    <Select value={formData.role} onValueChange={(val) => setFormData({...formData, role: val})}>
+                      <SelectTrigger className="bg-white">
+                        <div className="flex items-center gap-2 text-slate-600">
+                          <Shield className="w-4 h-4 text-slate-400" />
+                          <SelectValue />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Admin">Admin</SelectItem>
+                        <SelectItem value="Editor">Editor</SelectItem>
+                        <SelectItem value="Visualizador">Visualizador</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-slate-700">Status Inicial</Label>
+                    <Select value={formData.status} onValueChange={(val) => setFormData({...formData, status: val})}>
+                      <SelectTrigger className="bg-white">
+                        <div className="flex items-center gap-2 text-slate-600">
+                          <CheckCircle2 className="w-4 h-4 text-slate-400" />
+                          <SelectValue />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Ativo</SelectItem>
+                        <SelectItem value="inactive">Inativo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <DialogFooter className="p-6 border-t border-slate-100 bg-slate-50/30">
-            <Button type="button" variant="ghost" onClick={onClose} disabled={isLoading} className="hover:bg-slate-200">
-              Cancelar
-            </Button>
-            <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 min-w-[150px]" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Salvando...
-                </>
+          {/* COLUNA DIREITA*/}
+          <div className="space-y-4 flex flex-col h-full">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-emerald-600" />
+                Adicionar Membros
+              </h3>
+              <span className="text-xs text-emerald-700 font-medium bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                {selectedUsers.length} selecionado(s)
+              </span>
+            </div>
+
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input 
+                placeholder="Buscar usuário..." 
+                className="pl-9"
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+              />
+            </div>
+
+            {/* Lista de Usuários  */}
+            <div className="border rounded-xl h-[350px] overflow-y-auto p-2 space-y-1 bg-white shadow-sm">
+              {filteredUsers.length > 0 ? (
+                filteredUsers.map(user => (
+                  <div 
+                    key={user.id} 
+                    className={`flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer border group ${
+                      selectedUsers.includes(user.id) 
+                        ? 'bg-blue-50/80 border-blue-200' 
+                        : 'border-transparent hover:bg-slate-50'
+                    }`}
+                    onClick={() => toggleUser(user.id)}
+                  >
+                    <Checkbox 
+                      checked={selectedUsers.includes(user.id)}
+                      onCheckedChange={() => toggleUser(user.id)}
+                      className="data-[state=checked]:bg-blue-600 border-slate-300"
+                    />
+                    
+                    <div className="flex items-center gap-3 flex-1">
+                      <Avatar className="w-9 h-9 border-2 border-white shadow-sm">
+                        <AvatarImage src={user.avatar} />
+                        <AvatarFallback className="text-xs bg-slate-200 text-slate-600 font-bold">
+                          {user.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col">
+                        <span className={`text-sm font-semibold ${selectedUsers.includes(user.id) ? 'text-blue-700' : 'text-slate-700'}`}>
+                          {user.name}
+                        </span>
+                        <span className="text-xs text-slate-500 group-hover:text-slate-600">{user.email}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
               ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Criar Grupo
-                </>
+                <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3 my-auto py-10">
+                  <div className="p-4 bg-slate-50 rounded-full">
+                    <UserPlus className="w-8 h-8 opacity-50" />
+                  </div>
+                  <p className="text-sm font-medium">Nenhum usuário encontrado.</p>
+                </div>
               )}
-            </Button>
-          </DialogFooter>
-        </form>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter className="px-2 mt-4">
+          <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">Cancelar</Button>
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto" onClick={handleSave}>
+            <CheckCircle2 className="w-4 h-4 mr-2" />
+            Confirmar Criação do Grupo
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

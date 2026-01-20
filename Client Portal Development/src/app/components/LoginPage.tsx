@@ -60,7 +60,7 @@ export function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="nome@workon.com.br"
+                placeholder="nome@workongroup.com.br"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
