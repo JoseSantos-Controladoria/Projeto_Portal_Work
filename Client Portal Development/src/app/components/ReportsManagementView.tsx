@@ -8,11 +8,11 @@ import {
   ExternalLink,
   CheckCircle2,
   XCircle,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Users
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
-import { Label } from "@/app/components/ui/label";
 import { 
   Table, 
   TableBody, 
@@ -35,19 +35,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/app/components/ui/tooltip";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/app/components/ui/dialog";
+
+// IMPORT DO MODAL CORRIGIDO (Lembre-se de importar o arquivo correto)
+import { ReportRegistrationModal } from "./ReportRegistrationModal";
 
 interface ReportData {
   id: string;
   title: string;
-  client: string;
+  group: string; // MUDANÇA: 'client' vira 'group'
   workspace: string;
   lastUpdate: string;
   status: 'active' | 'inactive';
@@ -58,7 +53,7 @@ const INITIAL_REPORTS: ReportData[] = [
   { 
     id: 'sw1', 
     title: 'Resumo', 
-    client: 'Sherwin-Williams', 
+    group: 'Comercial Sell-out', // Exemplo de Grupo
     workspace: 'Comercial Sell-out',
     lastUpdate: '15/01/2026',
     status: 'active',
@@ -67,7 +62,7 @@ const INITIAL_REPORTS: ReportData[] = [
   { 
     id: 'sw2', 
     title: 'Status Day (Produtividade)', 
-    client: 'Sherwin-Williams', 
+    group: 'Logística & Supply',
     workspace: 'Logística & Supply',
     lastUpdate: '14/01/2026',
     status: 'active',
@@ -76,7 +71,7 @@ const INITIAL_REPORTS: ReportData[] = [
   { 
     id: 'pg1', 
     title: 'Execução em Loja', 
-    client: 'P&G', 
+    group: 'Trade Marketing',
     workspace: 'Trade Marketing',
     lastUpdate: '18/01/2026',
     status: 'active',
@@ -85,7 +80,7 @@ const INITIAL_REPORTS: ReportData[] = [
   { 
     id: 'h1', 
     title: 'Performance Sell-out', 
-    client: 'HALEON', 
+    group: 'Comercial Sell-out',
     workspace: 'Comercial Sell-out',
     lastUpdate: '20/01/2026',
     status: 'active',
@@ -96,42 +91,15 @@ const INITIAL_REPORTS: ReportData[] = [
 export function ReportsManagementView() {
   const [reports, setReports] = useState<ReportData[]>(INITIAL_REPORTS);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterClient, setFilterClient] = useState("all");
+  const [filterGroup, setFilterGroup] = useState("all"); // Filtro agora é por Grupo
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  const [newReport, setNewReport] = useState({
-    title: "",
-    client: "",
-    workspace: "",
-    url: "",
-    status: "active"
-  });
-
   const filteredReports = reports.filter(report => {
     const matchesSearch = report.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           report.workspace.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesClient = filterClient === "all" || report.client === filterClient;
-    return matchesSearch && matchesClient;
+    const matchesGroup = filterGroup === "all" || report.group === filterGroup;
+    return matchesSearch && matchesGroup;
   });
-
-  const handleSaveReport = () => {
-    if (!newReport.title || !newReport.client) return;
-
-    const reportToAdd: ReportData = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: newReport.title,
-      client: newReport.client,
-      workspace: newReport.workspace || "Geral",
-      lastUpdate: "Hoje",
-      status: newReport.status as 'active' | 'inactive', 
-      url: newReport.url || "#"
-    };
-
-    setReports([reportToAdd, ...reports]);
-    setIsModalOpen(false);
-    
-    setNewReport({ title: "", client: "", workspace: "", url: "", status: "active" }); 
-  };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -154,109 +122,6 @@ export function ReportsManagementView() {
         </Button>
       </div>
 
-      {/* MODAL DE CADASTRO */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[500px] bg-white">
-          <DialogHeader>
-            <DialogTitle>Cadastrar Novo Relatório</DialogTitle>
-            <DialogDescription>
-              Insira os dados do dashboard Power BI para disponibilizá-lo no portal.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            {/* Título */}
-            <div className="grid gap-2">
-              <Label htmlFor="title">Título do Relatório</Label>
-              <Input 
-                id="title" 
-                placeholder="Ex: Performance Vendas Q1" 
-                value={newReport.title}
-                onChange={(e) => setNewReport({...newReport, title: e.target.value})}
-              />
-            </div>
-            
-            {/* Linha 2: Cliente e Workspace */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label>Cliente</Label>
-                <Select 
-                  value={newReport.client} 
-                  onValueChange={(val) => setNewReport({...newReport, client: val})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Sherwin-Williams">Sherwin-Williams</SelectItem>
-                    <SelectItem value="HALEON">HALEON</SelectItem>
-                    <SelectItem value="P&G">P&G</SelectItem>
-                    <SelectItem value="SEMP TCL">SEMP TCL</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="workspace">Workspace / Área</Label>
-                <Input 
-                  id="workspace" 
-                  placeholder="Ex: Comercial" 
-                  value={newReport.workspace}
-                  onChange={(e) => setNewReport({...newReport, workspace: e.target.value})}
-                />
-              </div>
-            </div>
-
-            {/* Linha 3 (NOVA): Status */}
-            <div className="grid gap-2">
-              <Label>Status de Visualização</Label>
-              <Select 
-                value={newReport.status} 
-                onValueChange={(val) => setNewReport({...newReport, status: val})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                      Ativo (Visível)
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="inactive">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-slate-300" />
-                      Inativo (Oculto)
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* URL */}
-            <div className="grid gap-2">
-              <Label htmlFor="url">Link do Power BI (Embed)</Label>
-              <div className="relative">
-                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input 
-                  id="url" 
-                  className="pl-9" 
-                  placeholder="https://app.powerbi.com/..." 
-                  value={newReport.url}
-                  onChange={(e) => setNewReport({...newReport, url: e.target.value})}
-                />
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-            <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSaveReport}>Salvar Relatório</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Filtros */}
       <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
@@ -270,16 +135,15 @@ export function ReportsManagementView() {
         </div>
 
         <div className="w-full md:w-64">
-          <Select value={filterClient} onValueChange={setFilterClient}>
+          <Select value={filterGroup} onValueChange={setFilterGroup}>
             <SelectTrigger>
-              <SelectValue placeholder="Filtrar por Cliente" />
+              <SelectValue placeholder="Filtrar por Grupo" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os Clientes</SelectItem>
-              <SelectItem value="Sherwin-Williams">Sherwin-Williams</SelectItem>
-              <SelectItem value="HALEON">HALEON</SelectItem> 
-              <SelectItem value="P&G">P&G</SelectItem> 
-              <SelectItem value="SEMP TCL">SEMP TCL</SelectItem> 
+              <SelectItem value="all">Todos os Grupos</SelectItem>
+              <SelectItem value="Comercial Sell-out">Comercial Sell-out</SelectItem>
+              <SelectItem value="Logística & Supply">Logística & Supply</SelectItem> 
+              <SelectItem value="Trade Marketing">Trade Marketing</SelectItem> 
             </SelectContent>
           </Select>
         </div>
@@ -292,7 +156,7 @@ export function ReportsManagementView() {
             <TableRow className="bg-slate-50">
               <TableHead className="w-[350px]">Título do Relatório</TableHead>
               <TableHead>Workspace</TableHead>
-              <TableHead>Cliente</TableHead>
+              <TableHead>Grupo</TableHead> {/* Coluna atualizada */}
               <TableHead>Atualização</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -314,10 +178,12 @@ export function ReportsManagementView() {
                   <span className="text-sm text-slate-600">{report.workspace}</span>
                 </TableCell>
 
+                {/* Coluna Grupo */}
                 <TableCell>
-                   <Badge variant="outline" className="font-medium text-slate-600 border-slate-200 bg-slate-50">
-                     {report.client}
-                   </Badge>
+                   <div className="flex items-center gap-2">
+                     <Users className="w-3.5 h-3.5 text-slate-400" />
+                     <span className="text-sm text-slate-600">{report.group}</span>
+                   </div>
                 </TableCell>
 
                 <TableCell>
@@ -378,6 +244,11 @@ export function ReportsManagementView() {
           </TableBody>
         </Table>
       </div>
+
+      <ReportRegistrationModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+      />
     </div>
   );
 }

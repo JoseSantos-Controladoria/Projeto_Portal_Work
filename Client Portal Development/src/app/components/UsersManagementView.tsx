@@ -5,14 +5,13 @@ import {
   Pencil, 
   Trash2, 
   Download, 
-  Filter,
   XCircle,
   MoreHorizontal,
   ShieldAlert,
   ShieldCheck,
   User,
   Building,
-  Briefcase
+  Users // Ícone para Grupos
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -44,18 +43,20 @@ import {
 
 import { UserRegistrationModal } from "./UserRegistrationModal";
 
+// Interface Atualizada
 interface UserData {
   id: string;
   name: string;
   email: string;
   avatarUrl?: string;
   internalCompany: 'Work On' | 'InStore';
-  clientPortfolio: string[];
+  groups: string[]; // MUDANÇA: 'clientPortfolio' -> 'groups'
   role: 'Admin' | 'Analista' | 'Cliente';
   status: 'active' | 'inactive';
   lastLogin: string;
 }
 
+// Dados Mockados Atualizados
 const MOCK_USERS: UserData[] = [
   { 
     id: '1', 
@@ -63,7 +64,7 @@ const MOCK_USERS: UserData[] = [
     email: 'roberto.almeida@workon.com', 
     avatarUrl: 'https://github.com/shadcn.png',
     internalCompany: 'Work On', 
-    clientPortfolio: ['HALEON', 'P&G'],
+    groups: ['Comercial Sell-out', 'Trade Marketing'], // Grupos
     role: 'Analista',
     status: 'active',
     lastLogin: 'Hoje, 09:30'
@@ -73,7 +74,7 @@ const MOCK_USERS: UserData[] = [
     name: 'Fernanda Costa', 
     email: 'fernanda.costa@instore.com', 
     internalCompany: 'InStore', 
-    clientPortfolio: ['SEMP TCL'],
+    groups: ['Vendas Varejo'],
     role: 'Admin',
     status: 'active',
     lastLogin: 'Ontem, 14:20'
@@ -83,7 +84,7 @@ const MOCK_USERS: UserData[] = [
     name: 'Carlos System', 
     email: 'admin@portalwork.com', 
     internalCompany: 'Work On', 
-    clientPortfolio: ['Todos'],
+    groups: ['Todos'],
     role: 'Admin',
     status: 'active',
     lastLogin: 'Agora'
@@ -93,7 +94,7 @@ const MOCK_USERS: UserData[] = [
     name: 'Juliana Silva', 
     email: 'juliana.silva@haleon.com', 
     internalCompany: 'Work On',
-    clientPortfolio: ['HALEON'],
+    groups: ['Comercial Sell-out'],
     role: 'Cliente',
     status: 'inactive',
     lastLogin: '20/12/2025'
@@ -103,7 +104,7 @@ const MOCK_USERS: UserData[] = [
     name: 'Ricardo Oliveira', 
     email: 'ricardo@pg.com', 
     internalCompany: 'InStore', 
-    clientPortfolio: ['P&G'],
+    groups: ['Trade Marketing', 'Logística'],
     role: 'Cliente',
     status: 'active',
     lastLogin: 'Hoje, 11:00'
@@ -150,7 +151,7 @@ export function UsersManagementView() {
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             Gerenciamento de Usuários
           </h1>
-          <p className="text-slate-500 text-sm">Controle de acesso, carteiras e permissões.</p>
+          <p className="text-slate-500 text-sm">Controle de acesso, grupos e permissões.</p>
         </div>
         
         <div className="flex gap-2 w-full md:w-auto">
@@ -168,9 +169,8 @@ export function UsersManagementView() {
         </div>
       </div>
 
-      {/* Filtros Funcionais e Reativos */}
+      {/* Filtros */}
       <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-        
         <div className="md:col-span-3 space-y-2">
           <label className="text-sm font-medium text-slate-700">Empresa (Org)</label>
           <Select value={filterCompany} onValueChange={setFilterCompany}>
@@ -186,7 +186,8 @@ export function UsersManagementView() {
         </div>
 
         <div className="md:col-span-3 space-y-2">
-          <label className="text-sm font-medium text-slate-700">Permissão</label>
+          {/* MUDANÇA: Label atualizada */}
+          <label className="text-sm font-medium text-slate-700">Perfil de Acesso</label>
           <Select value={filterRole} onValueChange={setFilterRole}>
             <SelectTrigger>
               <SelectValue placeholder="Todos os níveis" />
@@ -238,8 +239,9 @@ export function UsersManagementView() {
             <TableRow className="bg-slate-50">
               <TableHead className="w-[300px]">Identificação</TableHead>
               <TableHead>Organização</TableHead>
-              <TableHead>Carteira (Clientes)</TableHead>
-              <TableHead>Permissão</TableHead>
+              {/* MUDANÇA: Coluna Grupos */}
+              <TableHead>Grupos</TableHead>
+              <TableHead>Perfil de Acesso</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -270,16 +272,20 @@ export function UsersManagementView() {
                     </div>
                   </TableCell>
 
+                  {/* Coluna Grupos */}
                   <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {user.clientPortfolio.includes('Todos') ? (
+                    <div className="flex flex-wrap gap-1 max-w-[200px]">
+                      {user.groups.includes('Todos') ? (
                          <Badge variant="secondary" className="bg-slate-800 text-white hover:bg-slate-700">Global</Badge>
                       ) : (
-                        user.clientPortfolio.map(client => (
-                          <Badge key={client} variant="outline" className="bg-slate-50 text-slate-600 border-slate-300">
-                            {client}
+                        user.groups.slice(0, 3).map(group => (
+                          <Badge key={group} variant="outline" className="bg-slate-50 text-slate-600 border-slate-300">
+                            {group}
                           </Badge>
                         ))
+                      )}
+                      {user.groups.length > 3 && (
+                        <Badge variant="outline" className="text-slate-400">+{user.groups.length - 3}</Badge>
                       )}
                     </div>
                   </TableCell>

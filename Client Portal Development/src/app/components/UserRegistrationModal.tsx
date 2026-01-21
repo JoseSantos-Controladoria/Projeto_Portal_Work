@@ -4,15 +4,16 @@ import {
   User, 
   Mail, 
   Building, 
-  Briefcase,
   Shield,
   CheckCircle2,
   Loader2,
-  Camera
+  Camera,
+  Users // Ícone para Grupos
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
+import { Checkbox } from "@/app/components/ui/checkbox"; // Usando Checkbox para múltipla seleção
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,16 @@ interface UserRegistrationModalProps {
   onClose: () => void;
 }
 
+// Grupos Mockados para Seleção
+const MOCK_GROUPS = [
+  'Comercial Sell-out',
+  'Trade Marketing',
+  'Logística & Supply',
+  'Vendas Varejo',
+  'Diretoria Executiva',
+  'Marketing Digital'
+];
+
 export function UserRegistrationModal({ isOpen, onClose }: UserRegistrationModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -43,10 +54,12 @@ export function UserRegistrationModal({ isOpen, onClose }: UserRegistrationModal
     name: "",
     email: "",
     internalCompany: "",
-    clientPortfolio: "",
     role: "",
     status: true
   });
+  
+  // Estado para múltiplos grupos
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -58,13 +71,24 @@ export function UserRegistrationModal({ isOpen, onClose }: UserRegistrationModal
     }
   };
 
+  // Função para alternar grupos
+  const toggleGroup = (group: string) => {
+    setSelectedGroups(prev => 
+      prev.includes(group) 
+        ? prev.filter(g => g !== group) 
+        : [...prev, group]
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
-    console.log("Novo Usuário:", { ...formData, avatarPreview });
+    console.log("Novo Usuário:", { ...formData, groups: selectedGroups, avatarPreview });
     setIsLoading(false);
     onClose();
+    // Limpar form
+    setSelectedGroups([]);
   };
 
   return (
@@ -141,8 +165,8 @@ export function UserRegistrationModal({ isOpen, onClose }: UserRegistrationModal
             </div>
           </div>
 
+          {/* 2. Empresa e Perfil */}
           <div className="grid grid-cols-2 gap-4">
-            {/* 2. Empresa (Org) */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <Building className="w-3.5 h-3.5 text-slate-500" /> Empresa (Org)
@@ -161,38 +185,17 @@ export function UserRegistrationModal({ isOpen, onClose }: UserRegistrationModal
               </Select>
             </div>
 
-            {/* 3. Carteira (Cliente) */}
+            {/* MUDANÇA: 'Nível de Acesso' -> 'Perfil de Acesso' */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
-                <Briefcase className="w-3.5 h-3.5 text-slate-500" /> Carteira Principal
-              </Label>
-              <Select 
-                value={formData.clientPortfolio} 
-                onValueChange={(val) => setFormData({...formData, clientPortfolio: val})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o cliente..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="HALEON">HALEON</SelectItem>
-                  <SelectItem value="P&G">P&G</SelectItem>
-                  <SelectItem value="SEMP TCL">SEMP TCL</SelectItem>
-                  <SelectItem value="Todos">Acesso Global (Todos)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* 4. Permissão */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Shield className="w-3.5 h-3.5 text-slate-500" /> Nível de Acesso
+                <Shield className="w-3.5 h-3.5 text-slate-500" /> Perfil de Acesso
               </Label>
               <Select 
                 value={formData.role} 
                 onValueChange={(val) => setFormData({...formData, role: val})}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Defina a permissão..." />
+                  <SelectValue placeholder="Defina o perfil..." />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Admin">Administrador</SelectItem>
@@ -201,20 +204,54 @@ export function UserRegistrationModal({ isOpen, onClose }: UserRegistrationModal
                 </SelectContent>
               </Select>
             </div>
-
-            {/* 5. Status */}
-            <div className="space-y-2 flex flex-col justify-end">
-              <div className="flex items-center justify-between border rounded-md p-2 h-10">
-                <span className="text-sm text-slate-600 pl-1">Acesso Ativo?</span>
-                <Switch 
-                  checked={formData.status}
-                  onCheckedChange={(checked) => setFormData({...formData, status: checked})}
-                />
-              </div>
-            </div>
           </div>
 
-          <DialogFooter className="pt-4 border-t border-slate-100">
+          {/* 3. MUDANÇA: Seleção de Grupos (Múltipla) */}
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2">
+              <Users className="w-3.5 h-3.5 text-slate-500" /> Grupos Associados
+            </Label>
+            
+            <div className="border rounded-md p-3 h-32 overflow-y-auto bg-slate-50/50 space-y-2">
+              {MOCK_GROUPS.map(group => (
+                 <div 
+                   key={group} 
+                   className="flex items-center space-x-2 p-2 rounded hover:bg-white hover:shadow-sm transition-all cursor-pointer"
+                   onClick={() => toggleGroup(group)}
+                 >
+                    <Checkbox 
+                      id={group} 
+                      checked={selectedGroups.includes(group)} 
+                      onCheckedChange={() => toggleGroup(group)}
+                      className="data-[state=checked]:bg-blue-600 border-slate-300"
+                    />
+                    <label 
+                      htmlFor={group} 
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer text-slate-700"
+                    >
+                      {group}
+                    </label>
+                 </div>
+              ))}
+            </div>
+            <p className="text-[10px] text-slate-500 text-right">
+              {selectedGroups.length} grupo(s) selecionado(s).
+            </p>
+          </div>
+
+          {/* 4. Status */}
+          <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-slate-700">Acesso Ativo?</span>
+              <span className="text-xs text-slate-500">Usuário poderá fazer login.</span>
+            </div>
+            <Switch 
+              checked={formData.status}
+              onCheckedChange={(checked) => setFormData({...formData, status: checked})}
+            />
+          </div>
+
+          <DialogFooter className="pt-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               Cancelar
             </Button>

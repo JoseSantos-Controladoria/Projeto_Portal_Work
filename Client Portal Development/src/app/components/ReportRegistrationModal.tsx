@@ -7,7 +7,8 @@ import {
   Loader2,
   LayoutTemplate,
   Type,
-  Globe
+  Globe,
+  Users // Ícone de Grupo
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -41,7 +42,7 @@ export function ReportRegistrationModal({ isOpen, onClose }: ReportRegistrationM
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    client: "",
+    group: "", // MUDANÇA: 'client' -> 'group'
     workspace: "",
     reportUrl: "",
     status: true
@@ -70,7 +71,7 @@ export function ReportRegistrationModal({ isOpen, onClose }: ReportRegistrationM
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[850px] p-0 overflow-hidden gap-0">
         
-        {/* Header Estilizado */}
+        {/* Header */}
         <DialogHeader className="p-6 pb-4 border-b border-slate-100 bg-slate-50/50">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-lg">
@@ -86,11 +87,11 @@ export function ReportRegistrationModal({ isOpen, onClose }: ReportRegistrationM
         <form onSubmit={handleSubmit}>
           <div className="grid md:grid-cols-12 h-full">
             
-            {/* C */}
+            {/* Coluna Esquerda: Capa (Sem alterações) */}
             <div className="md:col-span-5 p-6 bg-slate-50 border-r border-slate-100 flex flex-col gap-4">
               <Label className="text-slate-700 font-semibold">Capa do Relatório</Label>
               <p className="text-xs text-slate-500 -mt-2 mb-2">
-                Essa imagem aparecerá nos cards da tela inicial. Use uma captura de tela atraente.
+                Essa imagem aparecerá nos cards da tela inicial.
               </p>
               
               <div 
@@ -108,23 +109,14 @@ export function ReportRegistrationModal({ isOpen, onClose }: ReportRegistrationM
                 />
                 
                 {previewUrl ? (
-                  <>
-                    <img src={previewUrl} alt="Preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-40 transition-opacity duration-300" />
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="bg-white/20 backdrop-blur-sm p-3 rounded-full">
-                        <Upload className="w-6 h-6 text-white" />
-                      </div>
-                    </div>
-                  </>
+                  <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
                   <div className="text-center space-y-3 p-4">
                     <div className="w-14 h-14 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto text-blue-500 group-hover:scale-110 transition-transform duration-300">
                       <ImageIcon className="w-7 h-7" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-700 group-hover:text-blue-600">
-                        Clique para enviar
-                      </p>
+                      <p className="text-sm font-semibold text-slate-700">Clique para enviar</p>
                       <p className="text-xs text-slate-400 mt-1">PNG ou JPG (Max 2MB)</p>
                     </div>
                   </div>
@@ -132,7 +124,7 @@ export function ReportRegistrationModal({ isOpen, onClose }: ReportRegistrationM
               </div>
             </div>
 
-            {/* COLUNA DIREITA: Formulário (Dados) */}
+            {/* Coluna Direita: Dados */}
             <div className="md:col-span-7 p-6 space-y-5">
               
               {/* Título */}
@@ -150,21 +142,23 @@ export function ReportRegistrationModal({ isOpen, onClose }: ReportRegistrationM
                 />
               </div>
 
-              {/* Grid Cliente + Workspace */}
+              {/* MUDANÇA: Grid Grupo + Workspace */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="client">Cliente</Label>
+                  <Label htmlFor="group" className="flex items-center gap-2">
+                    <Users className="w-3.5 h-3.5 text-slate-400" /> Grupo de Acesso
+                  </Label>
                   <Select 
-                    value={formData.client} 
-                    onValueChange={(val) => setFormData({...formData, client: val})}
+                    value={formData.group} 
+                    onValueChange={(val) => setFormData({...formData, group: val})}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Sherwin-Williams">Sherwin-Williams</SelectItem>
-                      <SelectItem value="P&G">P&G</SelectItem>
-                      <SelectItem value="SEMP TCL">SEMP TCL</SelectItem>
+                      <SelectItem value="Comercial Sell-out">Comercial Sell-out</SelectItem>
+                      <SelectItem value="Trade Marketing">Trade Marketing</SelectItem>
+                      <SelectItem value="Logística & Supply">Logística & Supply</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -192,16 +186,13 @@ export function ReportRegistrationModal({ isOpen, onClose }: ReportRegistrationM
                 <Label htmlFor="url" className="flex items-center gap-2">
                   <Globe className="w-3.5 h-3.5 text-slate-400" /> Link do Power BI (Embed)
                 </Label>
-                <div className="relative">
-                  <LinkIcon className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                  <Input 
-                    id="url" 
-                    className="pl-9 font-mono text-xs text-blue-600" 
-                    placeholder="https://app.powerbi.com/..." 
-                    value={formData.reportUrl}
-                    onChange={(e) => setFormData({...formData, reportUrl: e.target.value})}
-                  />
-                </div>
+                <Input 
+                  id="url" 
+                  className="font-mono text-xs text-blue-600" 
+                  placeholder="https://app.powerbi.com/..." 
+                  value={formData.reportUrl}
+                  onChange={(e) => setFormData({...formData, reportUrl: e.target.value})}
+                />
               </div>
 
               {/* Descrição */}
@@ -209,19 +200,19 @@ export function ReportRegistrationModal({ isOpen, onClose }: ReportRegistrationM
                 <Label htmlFor="desc">Descrição</Label>
                 <Textarea 
                   id="desc" 
-                  placeholder="Breve resumo sobre os KPIs apresentados..." 
+                  placeholder="Breve resumo..." 
                   className="resize-none h-20 text-sm"
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
                 />
               </div>
 
-              {/* Status Toggle */}
+              {/* Status */}
               <div className="flex items-center justify-between pt-2">
                 <div className="flex flex-col">
                   <span className="text-sm font-medium text-slate-700">Ativo</span>
                   <span className="text-xs text-slate-500">
-                    {formData.status ? 'O relatório estará ativo e aparecerá para os usuários.' : 'O relatório ficará inativo e não aparecerá para os usuários.'}
+                    O relatório ficará visível para os usuários do grupo.
                   </span>
                 </div>
                 <Switch 
@@ -234,7 +225,7 @@ export function ReportRegistrationModal({ isOpen, onClose }: ReportRegistrationM
           </div>
 
           <DialogFooter className="p-6 border-t border-slate-100 bg-slate-50/30">
-            <Button type="button" variant="ghost" onClick={onClose} disabled={isLoading} className="hover:bg-slate-100">
+            <Button type="button" variant="ghost" onClick={onClose} disabled={isLoading}>
               Cancelar
             </Button>
             <Button type="submit" className="bg-blue-600 hover:bg-blue-700 min-w-[150px]" disabled={isLoading}>

@@ -1,16 +1,13 @@
 import { useState } from "react";
 import { 
   Briefcase, 
-  Building2, 
   Globe, 
-  AlignLeft, 
   CheckCircle2, 
   Loader2 
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
-import { Textarea } from "@/app/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -18,13 +15,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/app/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/app/components/ui/select";
 
 interface WorkspaceRegistrationModalProps {
   isOpen: boolean;
@@ -36,9 +26,7 @@ export function WorkspaceRegistrationModal({ isOpen, onClose }: WorkspaceRegistr
   
   const [formData, setFormData] = useState({
     name: "",
-    clientName: "",
-    url: "",
-    description: ""
+    url: ""
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,11 +37,12 @@ export function WorkspaceRegistrationModal({ isOpen, onClose }: WorkspaceRegistr
     
     setIsLoading(false);
     onClose();
+    setFormData({ name: "", url: "" });
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
             <Briefcase className="w-5 h-5 text-amber-600" />
@@ -61,44 +50,23 @@ export function WorkspaceRegistrationModal({ isOpen, onClose }: WorkspaceRegistr
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-5 py-2">
+        <form onSubmit={handleSubmit} className="space-y-5 py-4">
           
-          {/* Linha 1: Nome e Cliente */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="flex items-center gap-2">
-                <Briefcase className="w-3.5 h-3.5 text-slate-400" /> Nome do Workspace
-              </Label>
-              <Input 
-                id="name" 
-                placeholder="Ex: Comercial Sell-out" 
-                required
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="client" className="flex items-center gap-2">
-                <Building2 className="w-3.5 h-3.5 text-slate-400" /> Cliente
-              </Label>
-              <Select 
-                value={formData.clientName} 
-                onValueChange={(val) => setFormData({...formData, clientName: val})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="HALEON">HALEON</SelectItem>
-                  <SelectItem value="P&G">P&G</SelectItem>
-                  <SelectItem value="SEMP TCL">SEMP TCL</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Nome */}
+          <div className="space-y-2">
+            <Label htmlFor="name" className="flex items-center gap-2">
+              <Briefcase className="w-3.5 h-3.5 text-slate-400" /> Nome do Workspace
+            </Label>
+            <Input 
+              id="name" 
+              placeholder="Ex: Comercial Sell-out" 
+              required
+              value={formData.name}
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
+            />
           </div>
 
-          {/* Linha 2: URL  */}
+          {/* URL */}
           <div className="space-y-2">
             <Label htmlFor="url" className="flex items-center gap-2">
               <Globe className="w-3.5 h-3.5 text-slate-400" /> URL de Acesso
@@ -110,20 +78,6 @@ export function WorkspaceRegistrationModal({ isOpen, onClose }: WorkspaceRegistr
               required
               value={formData.url}
               onChange={(e) => setFormData({...formData, url: e.target.value})}
-            />
-          </div>
-
-          {/* Linha 3: Descrição */}
-          <div className="space-y-2">
-            <Label htmlFor="desc" className="flex items-center gap-2">
-              <AlignLeft className="w-3.5 h-3.5 text-slate-400" /> Descrição do Ambiente
-            </Label>
-            <Textarea 
-              id="desc" 
-              placeholder="Descreva o propósito deste workspace, quais áreas ele atende, etc." 
-              className="resize-none h-24"
-              value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
             />
           </div>
 

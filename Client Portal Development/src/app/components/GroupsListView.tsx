@@ -5,7 +5,6 @@ import {
   Pencil, 
   Trash2, 
   Users, 
-  Shield,
   ArrowLeft,
   Filter
 } from "lucide-react";
@@ -21,21 +20,20 @@ import {
 } from "@/app/components/ui/table";
 import { Badge } from "@/app/components/ui/badge";
 
-// 1. IMPORTAMOS O MODAL
+// Import do Modal (Certifique-se que o arquivo existe na pasta components)
 import { GroupRegistrationModal } from "./GroupRegistrationModal";
 
 interface GroupsListViewProps {
   onBack: () => void;
 }
 
-// Dados Mockados de Grupos (Sua estrutura original)
+// Dados Mockados (Sem o campo 'role')
 const MOCK_GROUPS = [
   { 
     id: '1', 
     name: 'Comercial Sell-out', 
     client: 'Sherwin-Williams', 
     users: 12, 
-    role: 'Visualizador', 
     status: 'active' 
   },
   { 
@@ -43,7 +41,6 @@ const MOCK_GROUPS = [
     name: 'Trade Marketing', 
     client: 'Sherwin-Williams', 
     users: 8, 
-    role: 'Editor', 
     status: 'active' 
   },
   { 
@@ -51,7 +48,6 @@ const MOCK_GROUPS = [
     name: 'Gerência Regional', 
     client: 'HALEON', 
     users: 5, 
-    role: 'Admin', 
     status: 'active' 
   },
   { 
@@ -59,15 +55,12 @@ const MOCK_GROUPS = [
     name: 'Operacional Loja', 
     client: 'SEMP TCL', 
     users: 24, 
-    role: 'Visualizador', 
     status: 'inactive' 
   },
 ];
 
 export function GroupsListView({ onBack }: GroupsListViewProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  
-  // 2. ESTADO PARA ABRIR/FECHAR O MODAL
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
   const filteredGroups = MOCK_GROUPS.filter(group => 
@@ -88,11 +81,10 @@ export function GroupsListView({ onBack }: GroupsListViewProps) {
             <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
               Grupos de Acesso
             </h1>
-            <p className="text-slate-500 text-sm">Gerencie permissões e times por cliente.</p>
+            <p className="text-slate-500 text-sm">Gerencie times por cliente.</p>
           </div>
         </div>
         
-        {/* 3. BOTÃO COM AÇÃO DE CLIQUE */}
         <Button 
           onClick={() => setIsRegisterModalOpen(true)}
           className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-900/20"
@@ -119,7 +111,7 @@ export function GroupsListView({ onBack }: GroupsListViewProps) {
         </Button>
       </div>
 
-      {/* Tabela de Grupos (Sem alterações visuais) */}
+      {/* Tabela de Grupos */}
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
@@ -127,7 +119,7 @@ export function GroupsListView({ onBack }: GroupsListViewProps) {
               <TableHead className="w-[300px]">Nome do Grupo</TableHead>
               <TableHead>Cliente Vinculado</TableHead>
               <TableHead>Usuários</TableHead>
-              <TableHead>Permissão</TableHead>
+              {/* REMOVIDO: Coluna Permissão */}
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -155,12 +147,7 @@ export function GroupsListView({ onBack }: GroupsListViewProps) {
                     </Badge>
                   </TableCell>
 
-                  <TableCell>
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <Shield className="w-3 h-3 text-slate-400" />
-                      {group.role}
-                    </div>
-                  </TableCell>
+                  {/* REMOVIDO: Célula Permissão */}
 
                   <TableCell>
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
@@ -197,7 +184,7 @@ export function GroupsListView({ onBack }: GroupsListViewProps) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-slate-500">
+                <TableCell colSpan={5} className="h-32 text-center text-slate-500">
                   Nenhum grupo encontrado.
                 </TableCell>
               </TableRow>
@@ -206,7 +193,6 @@ export function GroupsListView({ onBack }: GroupsListViewProps) {
         </Table>
       </div>
 
-      {/* 4. COMPONENTE DO MODAL SENDO RENDERIZADO */}
       <GroupRegistrationModal 
         isOpen={isRegisterModalOpen} 
         onClose={() => setIsRegisterModalOpen(false)} 
