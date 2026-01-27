@@ -19,6 +19,14 @@ export const mockClients: Client[] = [
     logoUrl: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=200&h=200&fit=crop',
     createdAt: '2025-01-03T00:00:00Z',
   },
+  // Adicione ao array mockClients em src/data/mockData.ts
+  {
+    id: 'client-4',
+    name: 'Bacio di Latte',
+    // Placeholder visual. Recomendo substituir pela URL do logo oficial no futuro.
+    logoUrl: 'https://images.unsplash.com/photo-1501443762994-82bd5dace89a?w=200&h=200&fit=crop', 
+    createdAt: new Date().toISOString(),
+  },
 ];
 
 
@@ -75,7 +83,18 @@ export const mockUsers: User[] = [
     role: 'client',
     company_id: 'sherwin',
     createdAt: new Date().toISOString(),
-  }
+  },
+  // Adicione ao array mockUsers para conseguir logar e ver o resultado
+  // Em src/data/mockData.ts
+{
+  id: '6',
+  name: 'Gerente Bacio',
+  email: 'gerente@bacio.com',
+  password: '123',
+  role: 'client',
+  company_id: 'bacio', // <--- ALTERE DE 'client-4' PARA 'bacio'
+  createdAt: new Date().toISOString(),
+},
 ];
 
 
@@ -149,5 +168,16 @@ export const mockDashboards: Dashboard[] = [
     created_at: '2026-01-03T00:00:00Z',
     updated_at: '2026-01-11T18:30:00Z',
     last_updated: '2026-01-11T18:30:00Z',
+  },
+  // Adicione ao array mockDashboards em src/data/mockData.ts
+  {
+    id: 'dash-8',
+    title: 'Gestão Operacional',
+    description: 'Monitoramento de KPIs operacionais e indicadores de performance',
+    embed_url: 'https://app.powerbi.com/view?r=eyJrIjoiYjA0ZWZhM2EtZDliZi00MmQ2LWE4YTQtNWUwOTBmZmYxOWI5IiwidCI6ImI1MGFkYzllLTQ5YjEtNDQxNy1hM2I1LTljNzFiZDNmMmMyZCJ9',
+    company_id: 'client-4', // Vínculo com a Bacio di Latte
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    last_updated: new Date().toISOString(),
   },
 ];

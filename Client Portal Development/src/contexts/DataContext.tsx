@@ -29,7 +29,8 @@ const MOCK_COMPANIES: Company[] = [
   { id: 'haleon', name: 'HALEON', logo: '/logos/haleon.png' },
   { id: 'pg', name: 'P&G', logo: '/logos/pg.png' },
   { id: 'semptcl', name: 'SEMP TCL', logo: '/logos/semptcl.png' },
-  { id: 'sherwin', name: 'Sherwin-Williams', logo: '/logos/sherwin.png' }
+  { id: 'sherwin', name: 'Sherwin-Williams', logo: '/logos/sherwin.png' },
+  { id: 'bacio', name: 'Bacio di Latte', logo: '/logos/bacio.png' }
 ];
 
 const INITIAL_DASHBOARDS: Dashboard[] = [
@@ -151,6 +152,17 @@ const INITIAL_DASHBOARDS: Dashboard[] = [
     type: 'Power BI',
     is_favorite: false,
     embedUrl: 'https://app.powerbi.com/view?r=eyJrIjoiYjZjNjAzZTAtMjYzNi00MzllLTlmNzgtMmZlMWRhOWJkMzYzIiwidCI6ImI1MGFkYzllLTQ5YjEtNDQxNy1hM2I1LTljNzFiZDNmMmMyZCJ9'
+  },
+  { 
+    id: 'dash-bacio-1', 
+    title: 'Gestão Operacional', 
+    company_id: 'bacio', // Deve ser igual ao id criado em MOCK_COMPANIES
+    description: 'Monitoramento de KPIs operacionais e indicadores de performance da rede.',
+    last_updated: new Date().toISOString(), 
+    tags: ['Operações', 'Gestão'], 
+    type: 'Power BI',
+    is_favorite: true,
+    embedUrl: 'https://app.powerbi.com/view?r=eyJrIjoiYjA0ZWZhM2EtZDliZi00MmQ2LWE4YTQtNWUwOTBmZmYxOWI5IiwidCI6ImI1MGFkYzllLTQ5YjEtNDQxNy1hM2I1LTljNzFiZDNmMmMyZCJ9'
   }
 ];
 

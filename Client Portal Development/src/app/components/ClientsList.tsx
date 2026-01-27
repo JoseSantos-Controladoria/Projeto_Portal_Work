@@ -57,6 +57,14 @@ const MOCK_CLIENTS: ClientData[] = [
     groups: ['Gerência', 'Campo - Norte/Nordeste', 'Merchandising'],
     activeReports: 15
   },
+  { 
+    id: '4', 
+    name: 'Bacio di Latte', 
+    description: 'Gelateria de origem italiana e cafeteria premium.',
+    logoColor: 'bg-stone-600', // Uma cor que remete a café/creme
+    groups: ['Operacional', 'Gerência', 'Qualidade'],
+    activeReports: 1
+  },
 ];
 
 interface ClientsListProps {
