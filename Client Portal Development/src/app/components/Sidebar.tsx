@@ -3,7 +3,7 @@ import { Button } from "@/app/components/ui/button";
 import { 
   LogOut, 
   LayoutGrid, 
-  BarChart3,
+  // BarChart3, // Removido se não for usar, mas ok manter
   Users,
   Building2,
   ScrollText,
@@ -21,11 +21,14 @@ interface SidebarProps {
 }
 
 export function Sidebar({ activeView, onViewChange }: SidebarProps) {
-  const { logout, user } = useAuth();
+  const { logout, user } = useAuth(); // Pegamos o user aqui
 
   const handleNavigation = (view: SidebarView) => {
     onViewChange(view);
   };
+
+  // Helper simples para checar admin
+  const isAdmin = user?.role === 'admin';
 
   const NavItem = ({ id, label, icon: Icon }: { id: SidebarView, label: string, icon: any }) => {
     const isActive = activeView === id;
@@ -51,13 +54,11 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
       
       {/* --- CABEÇALHO --- */}
       <div className="px-6 pt-8 pb-8 flex flex-col items-start">
-
         <img 
           src="/images/logo-white.png" 
           alt="Work On Logo" 
           className="h-14 w-auto max-w-[85%] object-contain mb-3 opacity-100" 
         />
-        
         <p className="text-xs font-medium text-slate-400 tracking-wide pl-1">
           Inteligência & Inovação
           <br />
@@ -67,10 +68,10 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
       {/* Navegação Principal */}
       <nav className="flex-1 px-4 py-6 overflow-y-auto custom-scrollbar space-y-8">
         
-        {/* GRUPO 1: OPERACIONAL */}
+        {/* GRUPO 1: OPERACIONAL (Todo mundo vê) */}
         <div>
           <p className="px-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-            <BarChart3 className="w-3 h-3" />
+            <LayoutGrid className="w-3 h-3" />
             Operacional
           </p>
           <div className="space-y-1">
@@ -78,35 +79,44 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
           </div>
         </div>
 
-        {/* GRUPO 2: CONFIGURAÇÕES */}
-        <div>
-          <p className="px-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-            <ShieldCheck className="w-3 h-3" />
-            Configurações
-          </p>
-          <div className="space-y-1">
-            <NavItem id="register_report" label="Cadastro de Relatório" icon={FilePlus} />
-            <NavItem id="workspaces" label="Workspaces Power BI" icon={Briefcase} />
-            <NavItem id="clients" label="Clientes e Grupos" icon={Building2} />
-            <NavItem id="users" label="Gerenciar Usuários" icon={Users} />
-            <NavItem id="logs" label="Logs de Acesso" icon={ScrollText} />
+        {/* GRUPO 2: CONFIGURAÇÕES (APENAS ADMIN) */}
+        {isAdmin && (
+          <div className="animate-in fade-in slide-in-from-left-5 duration-300">
+            <p className="px-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2 mt-6">
+              <ShieldCheck className="w-3 h-3" />
+              Administração
+            </p>
+            <div className="space-y-1">
+              <NavItem id="register_report" label="Cadastro de Relatório" icon={FilePlus} />
+              <NavItem id="workspaces" label="Workspaces Power BI" icon={Briefcase} />
+              <NavItem id="clients" label="Clientes e Grupos" icon={Building2} />
+              <NavItem id="users" label="Gerenciar Usuários" icon={Users} />
+              <NavItem id="logs" label="Logs de Acesso" icon={ScrollText} />
+            </div>
           </div>
-        </div>
+        )}
 
       </nav>
 
       {/* Footer / User Profile */}
       <div className="p-4 border-t border-slate-800 bg-slate-950/30">
         <div className="flex items-center gap-3 mb-4 px-2">
-          <div className="w-8 h-8 rounded-full bg-blue-900/50 border border-blue-700/30 flex items-center justify-center text-xs font-bold text-blue-400">
+          {/* Avatar com as iniciais da empresa ou do user */}
+          <div className={cn(
+            "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border",
+            isAdmin 
+              ? "bg-blue-900/50 border-blue-700/30 text-blue-400" 
+              : "bg-emerald-900/50 border-emerald-700/30 text-emerald-400"
+          )}>
             {user?.name?.charAt(0).toUpperCase() || 'U'}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-white truncate">
               {user?.name || 'Usuário'}
             </p>
-            <p className="text-xs text-slate-500 truncate">
-              {user?.role === 'admin' ? 'Administrador' : 'Analista'}
+            <p className="text-xs text-slate-500 truncate capitalize">
+              {/* Mostra o nome da empresa se for cliente, ou o cargo se for admin */}
+              {user?.role === 'admin' ? 'Administrador' : user?.company_id?.toUpperCase()}
             </p>
           </div>
         </div>

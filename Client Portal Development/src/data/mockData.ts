@@ -21,43 +21,63 @@ export const mockClients: Client[] = [
   },
 ];
 
+
 export const mockUsers: User[] = [
+  // 1. O Administrador (Vê tudo)
   {
-    id: 'user-1',
+    id: '1',
+    name: 'Administrador WorkOn',
     email: 'admin@workongroup.com.br',
-    password: 'admin123',
-    name: 'Administrador',
+    password: '123', // Senha simples para dev
     role: 'admin',
-    createdAt: '2025-01-01T00:00:00Z',
+    createdAt: new Date().toISOString(),
   },
+
+  // 2. Usuário HALEON
   {
-    id: 'user-2',
-    email: 'carlos@supermercados.com',
-    password: 'cliente123',
-    name: 'Carlos Silva',
+    id: '2',
+    name: 'Gestor Haleon',
+    email: 'gestor@haleon.com',
+    password: '123',
     role: 'client',
-    company_id: 'client-1',
-    createdAt: '2025-01-05T00:00:00Z',
+    company_id: 'haleon', // Vínculo mágico
+    createdAt: new Date().toISOString(),
   },
+
+  // 3. Usuário P&G
   {
-    id: 'user-3',
-    email: 'ana@atacado.com',
-    password: 'cliente123',
-    name: 'Ana Santos',
+    id: '3',
+    name: 'Analista P&G',
+    email: 'analista@pg.com',
+    password: '123',
     role: 'client',
-    company_id: 'client-2',
-    createdAt: '2025-01-06T00:00:00Z',
+    company_id: 'pg',
+    createdAt: new Date().toISOString(),
   },
+
+  // 4. Usuário SEMP TCL
   {
-    id: 'user-4',
-    email: 'joao@magazine.com',
-    password: 'cliente123',
-    name: 'João Oliveira',
+    id: '4',
+    name: 'Diretor Semp TCL',
+    email: 'diretor@semptcl.com',
+    password: '123',
     role: 'client',
-    company_id: 'client-3',
-    createdAt: '2025-01-07T00:00:00Z',
+    company_id: 'semptcl',
+    createdAt: new Date().toISOString(),
   },
+
+  // 5. Usuário Sherwin-Williams
+  {
+    id: '5',
+    name: 'Coord. Sherwin',
+    email: 'coord@sherwin.com',
+    password: '123',
+    role: 'client',
+    company_id: 'sherwin',
+    createdAt: new Date().toISOString(),
+  }
 ];
+
 
 export const mockDashboards: Dashboard[] = [
   {
