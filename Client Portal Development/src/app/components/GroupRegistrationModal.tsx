@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { 
   Users, 
-  Shield, 
   Building2, 
   Search,
   UserPlus,
   CheckCircle2
-} from "lucide-react";
+} from "lucide-react"; // Removido 'Shield' que não é mais usado
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
@@ -33,7 +32,7 @@ interface GroupRegistrationModalProps {
   onClose: () => void;
 }
 
-// Mock de usuários
+// Mock de usuários (Mantido igual)
 const USERS_AVAILABLE = [
   { id: '1', name: 'Roberto Almeida', email: 'roberto@workon.com', avatar: '' },
   { id: '2', name: 'Fernanda Costa', email: 'fernanda@instore.com', avatar: '' },
@@ -47,14 +46,13 @@ const USERS_AVAILABLE = [
   { id: '10', name: 'Isabela Santos', email: 'isabela@haleon.com', avatar: '' },
   { id: '11', name: 'Gustavo Lima', email: 'gustavo@pg.com', avatar: '' }, 
   { id: '12', name: 'Mariana Ribeiro', email: 'mariana@sherwin.com', avatar: '' },
-
 ];
 
 export function GroupRegistrationModal({ isOpen, onClose }: GroupRegistrationModalProps) {
   const [formData, setFormData] = useState({
     name: "",
     client: "",
-    role: "Visualizador",
+    // role: "Visualizador", // REMOVIDO: A permissão agora é exclusiva do usuário
     status: "active"
   });
 
@@ -62,9 +60,11 @@ export function GroupRegistrationModal({ isOpen, onClose }: GroupRegistrationMod
   const [userSearch, setUserSearch] = useState("");
 
   const handleSave = () => {
+    // Console log atualizado sem a role
     console.log("Criando Grupo:", { ...formData, members: selectedUsers });
     onClose();
-    setFormData({ name: "", client: "", role: "Visualizador", status: "active" });
+    // Reset do form
+    setFormData({ name: "", client: "", status: "active" });
     setSelectedUsers([]);
     setUserSearch("");
   };
@@ -93,7 +93,7 @@ export function GroupRegistrationModal({ isOpen, onClose }: GroupRegistrationMod
         {/* LAYOUT DE 2 COLUNAS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4 px-2">
           
-          {/*OLUNA ESQUERDA*/}
+          {/* COLUNA ESQUERDA - DADOS DO GRUPO */}
           <div className="space-y-5 bg-slate-50 p-5 rounded-xl border border-slate-100 h-full">
             <div>
               <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
@@ -131,44 +131,27 @@ export function GroupRegistrationModal({ isOpen, onClose }: GroupRegistrationMod
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label className="text-slate-700">Permissão Padrão</Label>
-                    <Select value={formData.role} onValueChange={(val) => setFormData({...formData, role: val})}>
-                      <SelectTrigger className="bg-white">
-                        <div className="flex items-center gap-2 text-slate-600">
-                          <Shield className="w-4 h-4 text-slate-400" />
-                          <SelectValue />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Admin">Admin</SelectItem>
-                        <SelectItem value="Editor">Editor</SelectItem>
-                        <SelectItem value="Visualizador">Visualizador</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label className="text-slate-700">Status Inicial</Label>
-                    <Select value={formData.status} onValueChange={(val) => setFormData({...formData, status: val})}>
-                      <SelectTrigger className="bg-white">
-                        <div className="flex items-center gap-2 text-slate-600">
-                          <CheckCircle2 className="w-4 h-4 text-slate-400" />
-                          <SelectValue />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">Ativo</SelectItem>
-                        <SelectItem value="inactive">Inativo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                {/* CAMPO DE STATUS (Agora ocupa a largura total pois Permissão foi removida) */}
+                <div className="grid gap-2">
+                  <Label className="text-slate-700">Status Inicial</Label>
+                  <Select value={formData.status} onValueChange={(val) => setFormData({...formData, status: val})}>
+                    <SelectTrigger className="bg-white">
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <CheckCircle2 className="w-4 h-4 text-slate-400" />
+                        <SelectValue />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Ativo</SelectItem>
+                      <SelectItem value="inactive">Inativo</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* COLUNA DIREITA*/}
+          {/* COLUNA DIREITA - SELEÇÃO DE MEMBROS */}
           <div className="space-y-4 flex flex-col h-full">
             <div className="flex items-center justify-between mb-1">
               <h3 className="font-semibold text-slate-900 flex items-center gap-2">
@@ -190,7 +173,7 @@ export function GroupRegistrationModal({ isOpen, onClose }: GroupRegistrationMod
               />
             </div>
 
-            {/* Lista de Usuários  */}
+            {/* Lista de Usuários */}
             <div className="border rounded-xl h-[350px] overflow-y-auto p-2 space-y-1 bg-white shadow-sm">
               {filteredUsers.length > 0 ? (
                 filteredUsers.map(user => (
