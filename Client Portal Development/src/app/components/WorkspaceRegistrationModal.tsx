@@ -1,102 +1,116 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
-  Briefcase, 
-  Globe, 
-  CheckCircle2, 
-  Loader2 
-} from "lucide-react";
+  Layout, Loader2, Link as LinkIcon 
+} from "lucide-react"; 
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/app/components/ui/dialog";
+import { workspaceService } from "@/services/workspaceService";
+import { toast } from "sonner";
 
-interface WorkspaceRegistrationModalProps {
+interface WorkspaceModalProps {
   isOpen: boolean;
   onClose: () => void;
+  workspaceIdToEdit?: number | null;
+  initialData?: any; 
+  onSuccess?: () => void;
 }
 
-export function WorkspaceRegistrationModal({ isOpen, onClose }: WorkspaceRegistrationModalProps) {
-  const [isLoading, setIsLoading] = useState(false);
+export function WorkspaceRegistrationModal({ 
+  isOpen, onClose, workspaceIdToEdit, initialData, onSuccess 
+}: WorkspaceModalProps) {
   
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Apenas Nome e URL
   const [formData, setFormData] = useState({
     name: "",
     url: ""
   });
 
+  useEffect(() => {
+    if (isOpen) {
+      if (workspaceIdToEdit && initialData) {
+        setFormData({
+          name: initialData.name || "",
+          url: initialData.url || ""
+        });
+      } else {
+        setFormData({ name: "", url: "" });
+      }
+    }
+  }, [isOpen, workspaceIdToEdit, initialData]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.name) {
+      toast.warning("O nome do Workspace é obrigatório.");
+      return;
+    }
+
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    console.log("Novo Workspace:", formData);
-    
-    setIsLoading(false);
-    onClose();
-    setFormData({ name: "", url: "" });
+    try {
+      await workspaceService.save({
+        id: workspaceIdToEdit || undefined,
+        name: formData.name,
+        url: formData.url
+      });
+
+      toast.success(workspaceIdToEdit ? "Workspace atualizado!" : "Workspace criado!");
+      if (onSuccess) onSuccess();
+      onClose();
+    } catch (error) {
+      toast.error("Erro ao salvar workspace.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <Briefcase className="w-5 h-5 text-amber-600" />
-            Novo Workspace
+          <DialogTitle className="flex items-center gap-2">
+            <Layout className="w-5 h-5 text-blue-600" />
+            {workspaceIdToEdit ? "Editar Workspace" : "Novo Workspace"}
           </DialogTitle>
+          <DialogDescription>
+            Defina o nome e o link da área de trabalho.
+          </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-5 py-4">
-          
-          {/* Nome */}
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="name" className="flex items-center gap-2">
-              <Briefcase className="w-3.5 h-3.5 text-slate-400" /> Nome do Workspace
-            </Label>
+            <Label htmlFor="name">Nome do Workspace</Label>
             <Input 
               id="name" 
-              placeholder="Ex: Comercial Sell-out" 
-              required
+              placeholder="Ex: Comercial - Bacio di Latte" 
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
             />
           </div>
 
-          {/* URL */}
           <div className="space-y-2">
-            <Label htmlFor="url" className="flex items-center gap-2">
-              <Globe className="w-3.5 h-3.5 text-slate-400" /> URL de Acesso
-            </Label>
-            <Input 
-              id="url" 
-              placeholder="https://app.powerbi.com/groups/..." 
-              className="text-blue-600 font-medium"
-              required
-              value={formData.url}
-              onChange={(e) => setFormData({...formData, url: e.target.value})}
-            />
+            <Label htmlFor="url">URL do Relatório (PowerBI/Embed)</Label>
+            <div className="relative">
+              <LinkIcon className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+              <Input 
+                id="url" 
+                className="pl-9"
+                placeholder="https://app.powerbi.com/..." 
+                value={formData.url}
+                onChange={(e) => setFormData({...formData, url: e.target.value})}
+              />
+            </div>
           </div>
 
-          <DialogFooter className="pt-4 border-t border-slate-100">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-              Cancelar
-            </Button>
-            <Button type="submit" className="bg-amber-600 hover:bg-amber-700 min-w-[140px]" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Cadastrar
-                </>
-              )}
+          <DialogFooter className="pt-2">
+            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
+              {isLoading ? <Loader2 className="animate-spin w-4 h-4" /> : "Salvar"}
             </Button>
           </DialogFooter>
         </form>

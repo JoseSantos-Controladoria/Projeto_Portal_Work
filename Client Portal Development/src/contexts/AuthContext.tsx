@@ -1,6 +1,7 @@
+// src/contexts/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, Profile } from '@/types';
-import { mockUsers } from '@/data/mockData';
+import { User, Profile, UserRole } from '@/types';
+import api from '@/services/api'; // Importe o serviço que criamos
 
 interface AuthContextType {
   user: User | null;
@@ -9,6 +10,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   loading: boolean;
+  errorMessage: string | null; // Adicionei para exibir erros do back
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,41 +19,86 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('tradedata_user');
-    if (savedUser) {
+    const savedToken = localStorage.getItem('tradedata_token');
+
+    if (savedUser && savedToken) {
       try {
-        const parsedUser = JSON.parse(savedUser);
-        setUser(parsedUser);
+        setUser(JSON.parse(savedUser));
       } catch (e) {
-        console.error('Erro ao recuperar sessão:', e);
-        localStorage.removeItem('tradedata_user');
+        logout();
       }
     }
     setLoading(false);
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    await new Promise(resolve => setTimeout(resolve, 500));
+    setErrorMessage(null);
+    try {
+      // 1. Mapeamento Front -> Back (email vira username)
+      const response = await api.post('/login', { 
+        username: email, 
+        password: password 
+      });
 
-    const foundUser = mockUsers.find(
-      (u) => u.email === email && u.password === password
-    );
+      const data = response.data;
 
-    if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem('tradedata_user', JSON.stringify(foundUser));
-      return true;
+      // 2. Tratamento de Erro no padrão do Back (Status 200 com flag ERROR)
+      if (data.status === 'ERROR') {
+        setErrorMessage(data.error_message || 'Erro ao realizar login');
+        return false;
+      }
+
+      if (data.status === 'SUCCESS' && data.userdata) {
+        const backendUser = data.userdata;
+
+        // 3. Adaptador (Adapter Pattern) Back -> Front
+        // Precisamos decidir a Role baseado no profile_name ou ID
+        const derivedRole: UserRole = backendUser.profile_name?.toLowerCase().includes('admin') 
+          ? 'admin' 
+          : 'client';
+
+        const userAdapted: User = {
+          id: backendUser.id.toString(),
+          email: backendUser.email,
+          name: backendUser.name,
+          role: derivedRole,
+          company_id: backendUser.company_id?.toString(),
+          createdAt: new Date().toISOString(), // Back não mandou data de criação
+        };
+
+        // 4. Salvar Sessão
+        localStorage.setItem('tradedata_token', data.sessionToken);
+        localStorage.setItem('tradedata_user', JSON.stringify(userAdapted));
+        
+        // Se quiser salvar os grupos também:
+        if (data.groups) {
+           localStorage.setItem('tradedata_groups', JSON.stringify(data.groups));
+        }
+
+        setUser(userAdapted);
+        return true;
+      }
+
+      return false;
+
+    } catch (error) {
+      console.error('Erro na requisição:', error);
+      // Tratamento se a API estiver fora do ar (Erro 500/404)
+      setErrorMessage('Falha de conexão com o servidor.');
+      return false;
     }
-
-    return false;
   };
 
   const logout = async (): Promise<void> => {
     setUser(null);
     setProfile(null);
     localStorage.removeItem('tradedata_user');
+    localStorage.removeItem('tradedata_token');
+    localStorage.removeItem('tradedata_groups');
   };
 
   return (
@@ -63,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         isAuthenticated: !!user,
         loading,
+        errorMessage
       }}
     >
       {children}

@@ -1,151 +1,108 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
-  Search, 
-  Plus, 
-  Pencil, 
-  Trash2, 
-  Download, 
-  XCircle,
-  MoreHorizontal,
-  ShieldAlert,
-  ShieldCheck,
-  User,
-  Building,
-  Users // Ícone para Grupos
+  Search, Plus, Pencil, Trash2, MoreHorizontal,
+  ShieldAlert, ShieldCheck, User as UserIcon, Building, Loader2 
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/app/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/app/components/ui/select";
 import { Badge } from "@/app/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, 
+  DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
+import { toast } from "sonner"; 
 
 import { UserRegistrationModal } from "./UserRegistrationModal";
-
-// Interface Atualizada
-interface UserData {
-  id: string;
-  name: string;
-  email: string;
-  avatarUrl?: string;
-  internalCompany: 'Work On' | 'InStore';
-  groups: string[]; // MUDANÇA: 'clientPortfolio' -> 'groups'
-  role: 'Admin' | 'Analista' | 'Cliente';
-  status: 'active' | 'inactive';
-  lastLogin: string;
-}
-
-// Dados Mockados Atualizados
-const MOCK_USERS: UserData[] = [
-  { 
-    id: '1', 
-    name: 'Roberto Almeida', 
-    email: 'roberto.almeida@workon.com', 
-    avatarUrl: 'https://github.com/shadcn.png',
-    internalCompany: 'Work On', 
-    groups: ['Comercial Sell-out', 'Trade Marketing'], // Grupos
-    role: 'Analista',
-    status: 'active',
-    lastLogin: 'Hoje, 09:30'
-  },
-  { 
-    id: '2', 
-    name: 'Fernanda Costa', 
-    email: 'fernanda.costa@instore.com', 
-    internalCompany: 'InStore', 
-    groups: ['Vendas Varejo'],
-    role: 'Admin',
-    status: 'active',
-    lastLogin: 'Ontem, 14:20'
-  },
-  { 
-    id: '3', 
-    name: 'Carlos System', 
-    email: 'admin@portalwork.com', 
-    internalCompany: 'Work On', 
-    groups: ['Todos'],
-    role: 'Admin',
-    status: 'active',
-    lastLogin: 'Agora'
-  },
-  { 
-    id: '4', 
-    name: 'Juliana Silva', 
-    email: 'juliana.silva@haleon.com', 
-    internalCompany: 'Work On',
-    groups: ['Comercial Sell-out'],
-    role: 'Cliente',
-    status: 'inactive',
-    lastLogin: '20/12/2025'
-  },
-  { 
-    id: '5', 
-    name: 'Ricardo Oliveira', 
-    email: 'ricardo@pg.com', 
-    internalCompany: 'InStore', 
-    groups: ['Trade Marketing', 'Logística'],
-    role: 'Cliente',
-    status: 'active',
-    lastLogin: 'Hoje, 11:00'
-  },
-];
+import { userService, User } from "@/services/userService";
+import { crudService } from "@/services/crudService";
 
 export function UsersManagementView() {
-  const [filterCompany, setFilterCompany] = useState<string>("all");
-  const [filterRole, setFilterRole] = useState<string>("all");
-  const [filterSearch, setFilterSearch] = useState("");
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // Mapa para traduzir company_id em Nome da Empresa
+  const [companiesMap, setCompaniesMap] = useState<Record<number, string>>({});
 
-  const handleClear = () => {
-    setFilterCompany("all");
-    setFilterRole("all");
-    setFilterSearch("");
+  const [filterSearch, setFilterSearch] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // 1. Busca Usuários
+      const userData = await userService.getAll({ page: 1, pagesize: 50, orderby: 'name' });
+      // Segurança: garante que items é um array, mesmo que venha undefined
+      setUsers(userData.items || []);
+
+      // 2. Busca Empresas (apenas para montar o mapa de nomes)
+      const companiesData = await crudService.getAll('company');
+      const compMap: Record<number, string> = {};
+      
+      // Segurança: garante que items existe
+      if (companiesData && companiesData.items) {
+          companiesData.items.forEach((c: any) => { compMap[c.id] = c.name; });
+      }
+      setCompaniesMap(compMap);
+
+    } catch (error) {
+      console.error("Erro ao carregar tabela:", error);
+      toast.error("Erro ao carregar usuários.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const filteredUsers = MOCK_USERS.filter(user => {
-    const matchesCompany = filterCompany === "all" || user.internalCompany === filterCompany;
-    const matchesRole = filterRole === "all" || user.role === filterRole;
-    const matchesSearch = user.name.toLowerCase().includes(filterSearch.toLowerCase()) ||
-                          user.email.toLowerCase().includes(filterSearch.toLowerCase());
-    return matchesCompany && matchesRole && matchesSearch;
-  });
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const renderRoleBadge = (role: string) => {
-    switch (role) {
-      case 'Admin':
-        return <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200 gap-1"><ShieldAlert className="w-3 h-3" /> Admin</Badge>;
-      case 'Analista':
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200 gap-1"><ShieldCheck className="w-3 h-3" /> Analista</Badge>;
-      default:
-        return <Badge variant="outline" className="text-slate-600 gap-1 bg-slate-50"><User className="w-3 h-3" /> Cliente</Badge>;
+  const handleEdit = (id: string) => {
+    setSelectedUserId(id);
+    setIsModalOpen(true);
+  };
+
+  const handleNew = () => {
+    setSelectedUserId(null);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Tem certeza que deseja excluir este usuário?")) return;
+    try {
+      await userService.delete(id);
+      toast.success("Usuário removido.");
+      fetchData();
+    } catch (error) {
+      toast.error("Erro ao excluir.");
     }
+  };
+
+  // Filtro Front-end Seguro
+  const filteredUsers = users.filter(user => 
+    (user.name?.toLowerCase() || '').includes(filterSearch.toLowerCase()) ||
+    (user.email?.toLowerCase() || '').includes(filterSearch.toLowerCase())
+  );
+
+  const renderRoleBadge = (roleName?: string) => {
+    const role = roleName?.toLowerCase() || 'cliente';
+    if (role.includes('admin')) {
+        return <Badge className="bg-purple-100 text-purple-700 border-purple-200 gap-1"><ShieldAlert className="w-3 h-3" /> Admin</Badge>;
+    }
+    if (role.includes('analista')) {
+        return <Badge className="bg-blue-100 text-blue-700 border-blue-200 gap-1"><ShieldCheck className="w-3 h-3" /> Analista</Badge>;
+    }
+    return <Badge variant="outline" className="text-slate-600 gap-1 bg-slate-50"><UserIcon className="w-3 h-3" /> Cliente</Badge>;
   };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
+      
+      {/* Header e Ações */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -155,13 +112,9 @@ export function UsersManagementView() {
         </div>
         
         <div className="flex gap-2 w-full md:w-auto">
-          <Button variant="outline" className="flex-1 md:flex-none">
-            <Download className="w-4 h-4 mr-2" />
-            Exportar
-          </Button>
           <Button 
             className="bg-blue-600 hover:bg-blue-700 flex-1 md:flex-none"
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleNew}
           >
             <Plus className="w-4 h-4 mr-2" />
             Novo Usuário
@@ -169,66 +122,16 @@ export function UsersManagementView() {
         </div>
       </div>
 
-      {/* Filtros */}
-      <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-        <div className="md:col-span-3 space-y-2">
-          <label className="text-sm font-medium text-slate-700">Empresa (Org)</label>
-          <Select value={filterCompany} onValueChange={setFilterCompany}>
-            <SelectTrigger>
-              <SelectValue placeholder="Todas" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas</SelectItem>
-              <SelectItem value="Work On">Work On</SelectItem>
-              <SelectItem value="InStore">InStore</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="md:col-span-3 space-y-2">
-          {/* MUDANÇA: Label atualizada */}
-          <label className="text-sm font-medium text-slate-700">Perfil de Acesso</label>
-          <Select value={filterRole} onValueChange={setFilterRole}>
-            <SelectTrigger>
-              <SelectValue placeholder="Todos os níveis" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="Admin">Admin</SelectItem>
-              <SelectItem value="Analista">Analista</SelectItem>
-              <SelectItem value="Cliente">Cliente</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="md:col-span-4 space-y-2">
-          <label className="text-sm font-medium text-slate-700">Buscar Usuário</label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input 
-              placeholder="Nome ou e-mail..." 
-              className="pl-9"
-              value={filterSearch}
-              onChange={(e) => setFilterSearch(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="md:col-span-2">
-          {(filterCompany !== 'all' || filterRole !== 'all' || filterSearch !== '') ? (
-             <Button 
-               variant="outline" 
-               className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-               onClick={handleClear}
-             >
-               <XCircle className="w-4 h-4 mr-2" />
-               Limpar
-             </Button>
-          ) : (
-            <Button variant="ghost" className="w-full text-slate-400 cursor-default hover:bg-transparent">
-              Filtros ativos
-            </Button>
-          )}
+      {/* Busca Simples */}
+      <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+        <div className="relative w-full md:w-1/2">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Input 
+            placeholder="Buscar por nome ou e-mail..." 
+            className="pl-9"
+            value={filterSearch}
+            onChange={(e) => setFilterSearch(e.target.value)}
+          />
         </div>
       </div>
 
@@ -237,30 +140,33 @@ export function UsersManagementView() {
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50">
-              <TableHead className="w-[300px]">Identificação</TableHead>
-              <TableHead>Organização</TableHead>
-              {/* MUDANÇA: Coluna Grupos */}
-              <TableHead>Grupos</TableHead>
-              <TableHead>Perfil de Acesso</TableHead>
+              <TableHead className="w-[300px]">Usuário</TableHead>
+              <TableHead>Empresa</TableHead>
+              <TableHead>Perfil</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredUsers.length > 0 ? (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-32 text-center">
+                  <div className="flex justify-center items-center gap-2"><Loader2 className="animate-spin" /> Carregando...</div>
+                </TableCell>
+              </TableRow>
+            ) : filteredUsers.length > 0 ? (
               filteredUsers.map((user) => (
                 <TableRow key={user.id} className="hover:bg-slate-50/50">
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9 border border-slate-200">
-                        <AvatarImage src={user.avatarUrl} />
                         <AvatarFallback className="bg-blue-100 text-blue-700 font-bold">
-                          {user.name.charAt(0)}
+                          {user.name ? user.name.charAt(0).toUpperCase() : '?'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-slate-900">{user.name}</span>
-                        <span className="text-xs text-slate-500">{user.email}</span>
+                        <span className="text-sm font-medium text-slate-900">{user.name || 'Sem nome'}</span>
+                        <span className="text-xs text-slate-500">{user.email || '-'}</span>
                       </div>
                     </div>
                   </TableCell>
@@ -268,59 +174,36 @@ export function UsersManagementView() {
                   <TableCell>
                     <div className="flex items-center gap-2 text-sm text-slate-700">
                       <Building className="w-4 h-4 text-slate-400" />
-                      {user.internalCompany}
+                      {companiesMap[user.company_id] || `ID: ${user.company_id}` || 'N/A'}
                     </div>
                   </TableCell>
 
-                  {/* Coluna Grupos */}
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1 max-w-[200px]">
-                      {user.groups.includes('Todos') ? (
-                         <Badge variant="secondary" className="bg-slate-800 text-white hover:bg-slate-700">Global</Badge>
-                      ) : (
-                        user.groups.slice(0, 3).map(group => (
-                          <Badge key={group} variant="outline" className="bg-slate-50 text-slate-600 border-slate-300">
-                            {group}
-                          </Badge>
-                        ))
-                      )}
-                      {user.groups.length > 3 && (
-                        <Badge variant="outline" className="text-slate-400">+{user.groups.length - 3}</Badge>
-                      )}
-                    </div>
-                  </TableCell>
-
-                  <TableCell>{renderRoleBadge(user.role)}</TableCell>
+                  <TableCell>{renderRoleBadge(user.perfil)}</TableCell>
 
                   <TableCell>
-                    <div className="flex flex-col gap-1">
-                      {user.status === 'active' ? (
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                          <span className="text-sm text-slate-600">Ativo</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-slate-300" />
-                          <span className="text-sm text-slate-400">Inativo</span>
-                        </div>
-                      )}
-                      <span className="text-[10px] text-slate-400 pl-3.5">Acesso: {user.lastLogin}</span>
-                    </div>
+                    {user.active ? (
+                      <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">Ativo</Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-slate-100 text-slate-500 border-slate-200">Inativo</Badge>
+                    )}
                   </TableCell>
 
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem><Pencil className="mr-2 h-4 w-4" /> Editar</DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600"><Trash2 className="mr-2 h-4 w-4" /> Excluir</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEdit(user.id)}>
+                            <Pencil className="mr-2 h-4 w-4" /> Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(user.id)}>
+                            <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -328,7 +211,7 @@ export function UsersManagementView() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-slate-500">
+                <TableCell colSpan={5} className="h-32 text-center text-slate-500">
                   Nenhum usuário encontrado.
                 </TableCell>
               </TableRow>
@@ -337,7 +220,12 @@ export function UsersManagementView() {
         </Table>
       </div>
 
-      <UserRegistrationModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <UserRegistrationModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        userIdToEdit={selectedUserId}
+        onSuccess={fetchData}
+      />
     </div>
   );
 }

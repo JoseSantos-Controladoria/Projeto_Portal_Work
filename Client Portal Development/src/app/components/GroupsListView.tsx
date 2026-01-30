@@ -1,184 +1,199 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Search, 
   Plus, 
   Pencil, 
   Trash2, 
+  MoreHorizontal,
   Users, 
-  ArrowLeft,
-  Filter
+  Building2, 
+  Loader2,
+  CheckCircle2,
+  XCircle
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/app/components/ui/table";
 import { Badge } from "@/app/components/ui/badge";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, 
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/app/components/ui/dropdown-menu";
+import { toast } from "sonner"; 
 
-// Import do Modal (Certifique-se que o arquivo existe na pasta components)
+// Certifique-se de que o Modal está na mesma pasta ou ajuste o import
 import { GroupRegistrationModal } from "./GroupRegistrationModal";
+import { groupService, Group } from "@/services/groupService";
 
-interface GroupsListViewProps {
-  onBack: () => void;
-}
+export function GroupsListView() {
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const [filterSearch, setFilterSearch] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
 
-// Dados Mockados (Sem o campo 'role')
-const MOCK_GROUPS = [
-  { 
-    id: '1', 
-    name: 'Comercial Sell-out', 
-    client: 'Sherwin-Williams', 
-    users: 12, 
-    status: 'active' 
-  },
-  { 
-    id: '2', 
-    name: 'Trade Marketing', 
-    client: 'Sherwin-Williams', 
-    users: 8, 
-    status: 'active' 
-  },
-  { 
-    id: '3', 
-    name: 'Gerência Regional', 
-    client: 'HALEON', 
-    users: 5, 
-    status: 'active' 
-  },
-  { 
-    id: '4', 
-    name: 'Operacional Loja', 
-    client: 'SEMP TCL', 
-    users: 24, 
-    status: 'inactive' 
-  },
-];
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // O endpoint getAll já traz o nome do cliente e a contagem de usuários
+      const data = await groupService.getAll({ page: 1, pagesize: 50, orderby: 'name' });
+      setGroups(data.items || []);
+    } catch (error) {
+      console.error("Erro ao carregar grupos:", error);
+      toast.error("Erro ao carregar grupos.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-export function GroupsListView({ onBack }: GroupsListViewProps) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const filteredGroups = MOCK_GROUPS.filter(group => 
-    group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    group.client.toLowerCase().includes(searchTerm.toLowerCase())
+  const handleEdit = (id: number) => {
+    setSelectedGroupId(id);
+    setIsModalOpen(true);
+  };
+
+  const handleNew = () => {
+    setSelectedGroupId(null);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Tem a certeza que deseja excluir este grupo?")) return;
+    try {
+      await groupService.delete(id);
+      toast.success("Grupo removido.");
+      fetchData();
+    } catch (error) {
+      toast.error("Erro ao excluir. Verifique se existem usuários vinculados.");
+    }
+  };
+
+  // Filtro local (Nome do Grupo ou Nome do Cliente)
+  const filteredGroups = groups.filter(group => 
+    (group.name?.toLowerCase() || '').includes(filterSearch.toLowerCase()) ||
+    (group.customer?.toLowerCase() || '').includes(filterSearch.toLowerCase())
   );
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
-      {/* Header */}
+      {/* Header e Ações */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-              Grupos de Acesso
-            </h1>
-            <p className="text-slate-500 text-sm">Gerencie times por cliente.</p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+            Grupos de Acesso
+          </h1>
+          <p className="text-slate-500 text-sm">Organize seus usuários por times ou clientes.</p>
         </div>
         
-        <Button 
-          onClick={() => setIsRegisterModalOpen(true)}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-900/20"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Grupo
-        </Button>
+        <div className="flex gap-2 w-full md:w-auto">
+          <Button 
+            className="bg-blue-600 hover:bg-blue-700 flex-1 md:flex-none"
+            onClick={handleNew}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Grupo
+          </Button>
+        </div>
       </div>
 
-      {/* Barra de Filtros */}
-      <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
+      {/* Busca Simples */}
+      <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+        <div className="relative w-full md:w-1/2">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input 
-            placeholder="Buscar grupo ou cliente..." 
+            placeholder="Pesquisar por nome do grupo ou cliente..." 
             className="pl-9"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={filterSearch}
+            onChange={(e) => setFilterSearch(e.target.value)}
           />
         </div>
-        <Button variant="outline" className="gap-2 text-slate-600">
-          <Filter className="w-4 h-4" />
-          Filtros
-        </Button>
       </div>
 
-      {/* Tabela de Grupos */}
+      {/* Tabela */}
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50/50">
-              <TableHead className="w-[300px]">Nome do Grupo</TableHead>
-              <TableHead>Cliente Vinculado</TableHead>
-              <TableHead>Usuários</TableHead>
-              {/* REMOVIDO: Coluna Permissão */}
-              <TableHead>Status</TableHead>
+            <TableRow className="bg-slate-50">
+              <TableHead className="w-[30%]">Nome do Grupo</TableHead>
+              <TableHead className="w-[30%]">Cliente Vinculado</TableHead>
+              <TableHead className="w-[15%] text-center">Membros</TableHead>
+              <TableHead className="w-[15%] text-center">Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredGroups.length > 0 ? (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-32 text-center">
+                  <div className="flex justify-center items-center gap-2">
+                    <Loader2 className="animate-spin text-blue-600" /> Carregando...
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : filteredGroups.length > 0 ? (
               filteredGroups.map((group) => (
-                <TableRow key={group.id} className="hover:bg-slate-50/50 group">
+                <TableRow key={group.id} className="hover:bg-slate-50/50">
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-slate-100 rounded-lg text-slate-500">
                         <Users className="w-4 h-4" />
                       </div>
-                      <span className="font-semibold text-slate-700">{group.name}</span>
+                      <span className="text-sm font-medium text-slate-900">
+                        {group.name}
+                      </span>
                     </div>
                   </TableCell>
                   
                   <TableCell>
-                    <span className="text-sm text-slate-600">{group.client}</span>
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <Building2 className="w-4 h-4 text-slate-400" />
+                      {group.customer || <span className="text-slate-400 italic">Geral / Sem vínculo</span>}
+                    </div>
                   </TableCell>
 
-                  <TableCell>
-                    <Badge variant="secondary" className="bg-slate-100 text-slate-600 font-normal">
-                      {group.users} membros
+                  <TableCell className="text-center">
+                    <Badge variant="secondary" className="bg-slate-100 text-slate-700">
+                      {group.qty_users || 0} usuário(s)
                     </Badge>
                   </TableCell>
 
-                  {/* REMOVIDO: Célula Permissão */}
-
-                  <TableCell>
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      group.status === 'active' 
-                        ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20' 
-                        : 'bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-500/10'
-                    }`}>
-                      {group.status === 'active' ? 'Ativo' : 'Inativo'}
-                    </span>
+                  <TableCell className="text-center">
+                    {group.active ? (
+                      <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
+                         <CheckCircle2 className="w-3 h-3" /> Ativo
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200 gap-1">
+                        <XCircle className="w-3 h-3" /> Inativo
+                      </Badge>
+                    )}
                   </TableCell>
 
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                        title="Editar Grupo"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                        title="Excluir Grupo"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleEdit(group.id)}>
+                            <Pencil className="mr-2 h-4 w-4" /> Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(group.id)}>
+                            <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))
@@ -194,10 +209,11 @@ export function GroupsListView({ onBack }: GroupsListViewProps) {
       </div>
 
       <GroupRegistrationModal 
-        isOpen={isRegisterModalOpen} 
-        onClose={() => setIsRegisterModalOpen(false)} 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        groupIdToEdit={selectedGroupId}
+        onSuccess={fetchData}
       />
-
     </div>
   );
 }

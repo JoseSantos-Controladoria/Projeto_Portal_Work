@@ -1,194 +1,205 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
-  Link as LinkIcon, 
-  CheckCircle2,
-  Loader2,
-  LayoutTemplate,
-  Type,
-  Globe,
-  Users // Ícone de Grupo
-} from "lucide-react"; // Removidos: Upload, Image
+  FileBarChart, Layout, Link as LinkIcon, Loader2 
+} from "lucide-react"; 
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
-import { Textarea } from "@/app/components/ui/textarea";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/app/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/app/components/ui/select";
 import { Switch } from "@/app/components/ui/switch";
+import { reportService } from "@/services/reportService";
+import { toast } from "sonner";
 
-interface ReportRegistrationModalProps {
+interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
+  reportIdToEdit?: number | null;
+  initialData?: any; 
+  onSuccess?: () => void;
 }
 
-export function ReportRegistrationModal({ isOpen, onClose }: ReportRegistrationModalProps) {
-  const [isLoading, setIsLoading] = useState(false);
+export function ReportRegistrationModal({ 
+  isOpen, onClose, reportIdToEdit, initialData, onSuccess 
+}: ReportModalProps) {
   
+  const [isLoading, setIsLoading] = useState(false);
+  const [workspacesList, setWorkspacesList] = useState<any[]>([]);
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    group: "", 
-    workspace: "",
-    reportUrl: "",
-    status: true
+    workspace_id: "",
+    embedded_url: "",
+    active: true
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      loadWorkspaces();
+      if (reportIdToEdit && initialData) {
+        setFormData({
+          title: initialData.title || "",
+          description: initialData.description || "",
+          workspace_id: initialData.workspace_id ? String(initialData.workspace_id) : "",
+          embedded_url: initialData.embedded_url || "",
+          active: initialData.active ?? true
+        });
+      } else {
+        setFormData({ 
+          title: "", description: "", workspace_id: "", 
+          embedded_url: "", active: true 
+        });
+      }
+    }
+  }, [isOpen, reportIdToEdit, initialData]);
+
+  const loadWorkspaces = async () => {
+    try {
+      console.log("🔄 Iniciando busca de Workspaces..."); // LOG 1
+      const data = await reportService.getAuxiliaryData();
+      console.log("📦 Dados recebidos do Serviço:", data); // LOG 2
+      
+      if (data && data.workspaces) {
+          console.log("✅ Workspaces encontrados:", data.workspaces.length); // LOG 3
+          setWorkspacesList(data.workspaces);
+      } else {
+          console.warn("⚠️ Array de workspaces veio vazio ou inválido.");
+      }
+    } catch (error) {
+      console.error("❌ Erro fatal ao buscar workspaces:", error);
+      toast.error("Não foi possível carregar a lista de Workspaces.");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // CORREÇÃO: Validação separada para facilitar o entendimento
+    if (!formData.title.trim()) {
+      toast.warning("Por favor, digite um título para o relatório.");
+      return;
+    }
+
+    if (!formData.workspace_id) {
+      toast.warning("Selecione um Workspace para continuar.");
+      return;
+    }
+
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    console.log("Dados:", formData);
-    setIsLoading(false);
-    onClose();
+    try {
+      await reportService.save({
+        id: reportIdToEdit || undefined,
+        title: formData.title,
+        description: formData.description,
+        workspace_id: Number(formData.workspace_id),
+        embedded_url: formData.embedded_url,
+        active: formData.active
+      });
+
+      toast.success(reportIdToEdit ? "Relatório atualizado!" : "Relatório criado!");
+      if (onSuccess) onSuccess();
+      onClose();
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao salvar relatório.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden gap-0">
-        
-        {/* Header */}
-        <DialogHeader className="p-6 pb-4 border-b border-slate-100 bg-slate-50/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <LayoutTemplate className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <DialogTitle className="text-xl font-bold text-slate-900">Novo Relatório</DialogTitle>
-              <p className="text-sm text-slate-500 mt-1">Configure os detalhes do dashboard para publicação.</p>
-            </div>
-          </div>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FileBarChart className="w-5 h-5 text-blue-600" />
+            {reportIdToEdit ? "Editar Relatório" : "Novo Relatório"}
+          </DialogTitle>
+          <DialogDescription>
+            Cadastre os detalhes do dashboard PowerBI ou link externo.
+          </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
-          <div className="p-6 space-y-5">
-            
-            {/* Título */}
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="title" className="flex items-center gap-2">
-                <Type className="w-3.5 h-3.5 text-slate-400" /> Título do Dashboard
-              </Label>
+              <Label htmlFor="title">Título do Relatório</Label>
               <Input 
                 id="title" 
-                placeholder="Ex: Executivo de Vendas 2026" 
-                className="font-medium"
-                required
+                placeholder="Ex: DRE Consolidado" 
                 value={formData.title}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
               />
             </div>
-
-            {/* Grid Grupo + Workspace */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="group" className="flex items-center gap-2">
-                  <Users className="w-3.5 h-3.5 text-slate-400" /> Grupo de Acesso
-                </Label>
-                <Select 
-                  value={formData.group} 
-                  onValueChange={(val) => setFormData({...formData, group: val})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Comercial Sell-out">Comercial Sell-out</SelectItem>
-                    <SelectItem value="Trade Marketing">Trade Marketing</SelectItem>
-                    <SelectItem value="Logística & Supply">Logística & Supply</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="workspace">Workspace</Label>
-                <Select 
-                  value={formData.workspace} 
-                  onValueChange={(val) => setFormData({...formData, workspace: val})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="comercial">Comercial</SelectItem>
-                    <SelectItem value="financeiro">Financeiro</SelectItem>
-                    <SelectItem value="logistica">Logística</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* URL */}
             <div className="space-y-2">
-              <Label htmlFor="url" className="flex items-center gap-2">
-                <Globe className="w-3.5 h-3.5 text-slate-400" /> Link do Power BI (Embed)
-              </Label>
-              <div className="relative">
-                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input 
-                  id="url" 
-                  className="pl-9 font-mono text-xs text-blue-600" 
-                  placeholder="https://app.powerbi.com/..." 
-                  value={formData.reportUrl}
-                  onChange={(e) => setFormData({...formData, reportUrl: e.target.value})}
-                />
-              </div>
+              <Label>Workspace (Área)</Label>
+              <Select 
+                value={formData.workspace_id} 
+                onValueChange={(val) => setFormData({...formData, workspace_id: val})}
+              >
+                <SelectTrigger>
+                  <div className="flex items-center gap-2 text-slate-600">
+                    <Layout className="w-4 h-4 text-slate-400" />
+                    <SelectValue placeholder="Selecione..." />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  {workspacesList.length === 0 ? (
+                    <SelectItem value="disabled" disabled>Nenhum workspace encontrado</SelectItem>
+                  ) : (
+                    workspacesList.map(ws => (
+                      <SelectItem key={ws.id} value={String(ws.id)}>
+                        {ws.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
-
-            {/* Descrição */}
-            <div className="space-y-2">
-              <Label htmlFor="desc">Descrição</Label>
-              <Textarea 
-                id="desc" 
-                placeholder="Breve resumo sobre o conteúdo deste relatório..." 
-                className="resize-none h-20 text-sm"
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-              />
-            </div>
-
-            {/* Status */}
-            <div className="flex items-center justify-between pt-2 border-t border-slate-100 mt-4">
-              <div className="flex flex-col">
-                <span className="text-sm font-medium text-slate-700">Relatório Ativo</span>
-                <span className="text-xs text-slate-500">
-                  Visível para os usuários do grupo selecionado.
-                </span>
-              </div>
-              <Switch 
-                checked={formData.status}
-                onCheckedChange={(checked) => setFormData({...formData, status: checked})}
-              />
-            </div>
-
           </div>
 
-          <DialogFooter className="p-6 border-t border-slate-100 bg-slate-50/30">
-            <Button type="button" variant="ghost" onClick={onClose} disabled={isLoading}>
-              Cancelar
-            </Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 min-w-[150px]" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Publicar Relatório
-                </>
-              )}
+          <div className="space-y-2">
+            <Label htmlFor="desc">Descrição (Opcional)</Label>
+            <Input 
+              id="desc" 
+              placeholder="Breve resumo do conteúdo..." 
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+            />
+          </div>
+
+          <div className="space-y-2 border-t pt-4">
+            <Label className="flex items-center gap-2">
+              <LinkIcon className="w-4 h-4" /> Link do Relatório (Embed)
+            </Label>
+            <Input 
+              placeholder="https://app.powerbi.com/reportEmbed?..." 
+              value={formData.embedded_url}
+              onChange={(e) => setFormData({...formData, embedded_url: e.target.value})}
+            />
+          </div>
+
+          <div className="flex items-center justify-between border-t pt-4 mt-2">
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">Relatório Ativo?</span>
+              <span className="text-xs text-slate-500">Se desligado, ninguém visualiza.</span>
+            </div>
+            <Switch 
+              checked={formData.active}
+              onCheckedChange={(checked) => setFormData({...formData, active: checked})}
+            />
+          </div>
+
+          <DialogFooter className="pt-2">
+            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
+              {isLoading ? <Loader2 className="animate-spin w-4 h-4" /> : "Salvar"}
             </Button>
           </DialogFooter>
         </form>

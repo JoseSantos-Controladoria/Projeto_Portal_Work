@@ -10,7 +10,7 @@ const ReportViewer = lazy(() => import("@/app/components/ReportViewer").then(m =
 const ClientsListView = lazy(() => import("@/app/components/ClientsListView").then(m => ({ default: m.ClientsListView })));
 const WorkspacesListView = lazy(() => import("@/app/components/WorkspacesListView").then(m => ({ default: m.WorkspacesListView })));
 const UsersManagementView = lazy(() => import("@/app/components/UsersManagementView").then(m => ({ default: m.UsersManagementView }))); 
-const ReportsManagementView = lazy(() => import("@/app/components/ReportsManagementView").then(m => ({ default: m.ReportsManagementView })));
+const ReportsManagementView = lazy(() => import("@/app/components/ReportsManagementView"));
 const AccessLogsView = lazy(() => import("@/app/components/AccessLogsView").then(m => ({ default: m.AccessLogsView })));
 
 function AppContent() {
