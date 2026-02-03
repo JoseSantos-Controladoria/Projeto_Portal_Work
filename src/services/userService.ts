@@ -1,6 +1,6 @@
 import api from './api';
 import { crudService, PaginationParams } from './crudService';
-import { toast } from "sonner"; // Importamos para avisar erros não-criticos
+import { toast } from "sonner"; 
 
 export interface User {
   id: string; 
@@ -19,7 +19,6 @@ export const userService = {
   getAll: async (pagination?: PaginationParams) => {
     try {
       const response = await crudService.getAll<User>('user', pagination);
-      console.log("🔥 [UserService] Usuários encontrados:", response);
       return response;
     } catch (error) {
       console.error("❌ [UserService] Erro ao listar usuários:", error);
@@ -30,8 +29,6 @@ export const userService = {
   // 2. Buscar Dados Auxiliares
   getAuxiliaryData: async () => {
     try {
-      console.log("🔄 [UserService] Buscando dados auxiliares...");
-      
       const [companies, profiles, groups] = await Promise.all([
         crudService.getAll('company'),
         crudService.getAll('profile'),
@@ -49,10 +46,12 @@ export const userService = {
     }
   },
 
-  // 3. Buscar Grupos de um Usuário
+  // 3. Buscar Grupos de um Usuário (CORRIGIDO)
   getUserGroups: async (userId: string | number) => {
     try {
-      const response = await api.get(`/usergroup/${userId}`);
+      // 🔴 ANTES: /usergroup/${userId}
+      // 🟢 AGORA: /groupsbyuser/${userId} (Conforme definido no back)
+      const response = await api.get(`/groupsbyuser/${userId}`);
       return response.data.groups || []; 
     } catch (error) {
       console.error(`Erro ao buscar grupos do user ${userId}`, error);
@@ -60,7 +59,7 @@ export const userService = {
     }
   },
 
-  // 4. Salvar Usuário (Blindado)
+  // 4. Salvar Usuário
   save: async (userData: Partial<User>, selectedGroupIds: number[]) => {
     let userId = userData.id;
     let isNewUser = !userId;
@@ -75,33 +74,31 @@ export const userService = {
         userId = res.id;
       }
     } catch (error: any) {
-      // Se falhar AQUI, é erro crítico (o usuário não foi salvo)
       console.error("Erro CRÍTICO ao salvar usuário:", error);
-      throw error; // Repassa o erro para o modal exibir
+      throw error;
     }
 
-    // B. Salvar Grupos (Try/Catch Isolado)
-    // Só tentamos salvar se tivermos um ID de usuário válido
+    // B. Salvar Grupos
     if (userId) {
       try {
-        // Otimização: Se for usuário novo e não escolheu grupos, nem chama a API
+        // Se for usuário novo e não escolheu grupos, nem chama a API
         if (isNewUser && (!selectedGroupIds || selectedGroupIds.length === 0)) {
            return userId;
         }
 
-        // Se tiver grupos ou for edição (precisa limpar), chama a API
+        // Se tiver grupos ou for edição, chama a API
         if (selectedGroupIds) { 
-           await api.post('/usergroup', {
+           // 🔴 ANTES: /usergroup
+           // 🟢 AGORA: /groupsbyuser (Conforme definido no back)
+           await api.post('/groupsbyuser', {
             userid: userId,
             groups: selectedGroupIds,
             action: 'DELETE_EXISTING_GROUPS'
           });
         }
       } catch (groupError) {
-        // Se falhar AQUI, é erro não-crítico (usuário foi salvo, mas grupos não)
         console.error("⚠️ Aviso: Usuário salvo, mas erro ao vincular grupos:", groupError);
         toast.warning("Usuário salvo, mas houve falha ao vincular os grupos.");
-        // NÃO lançamos 'throw groupError' para não travar o fluxo de sucesso
       }
     }
 

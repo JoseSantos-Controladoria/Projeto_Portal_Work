@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { 
   ArrowLeft, 
   Maximize2, 
@@ -7,18 +8,32 @@ import {
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Dashboard } from "@/contexts/DataContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { logService } from "@/services/logService";
 
 interface ReportViewerProps {
   dashboardId: string;
-  dashboard?: Dashboard; 
+  dashboard?: Dashboard | any; // Flexibilizando o tipo para aceitar dados do banco
   onBack: () => void;
 }
 
 export function ReportViewer({ dashboard, onBack }: ReportViewerProps) {
-  
+  const { user } = useAuth();
+
+  // ✅ GATILHO DE LOG: Registra o acesso assim que o componente monta ou muda de relatório
+  useEffect(() => {
+    // Só registra se tivermos Usuário e ID do Relatório válidos
+    if (user?.id && dashboard?.id) {
+       // Converte ID para numero (banco espera int) e dispara o log
+       // 'OPEN REPORT' é a ação padrão de visualização
+       logService.logAction(user.id, 'OPEN REPORT', Number(dashboard.id));
+    }
+  }, [dashboard?.id, user?.id]);
+
   if (!dashboard) return null;
 
-  const reportUrl = dashboard.embedUrl || "";
+  // Compatibilidade: Tenta pegar 'embedUrl' (frontend/mock) ou 'embedded_url' (backend)
+  const reportUrl = dashboard.embedUrl || dashboard.embedded_url || "";
 
   return (
     <div className="flex flex-col h-full bg-slate-50">
@@ -34,10 +49,10 @@ export function ReportViewer({ dashboard, onBack }: ReportViewerProps) {
               {dashboard.title}
             </h2>
             <div className="flex items-center gap-2 text-xs text-slate-500">
-              <span>Atualizado {dashboard.last_update}</span>
+              <span>Atualizado {dashboard.last_update || "Recentemente"}</span>
               <span className="w-1 h-1 rounded-full bg-slate-300" />
               <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-medium border border-blue-100">
-                {dashboard.type}
+                {dashboard.type || "Relatório"}
               </span>
             </div>
           </div>
@@ -58,7 +73,7 @@ export function ReportViewer({ dashboard, onBack }: ReportViewerProps) {
           
           <div className="h-6 w-px bg-slate-200 mx-1 hidden md:block" />
           
-          <Button variant="ghost" size="icon" title="Atualizar">
+          <Button variant="ghost" size="icon" title="Atualizar" onClick={() => window.location.reload()}>
             <RefreshCw className="w-4 h-4 text-slate-500" />
           </Button>
           <Button variant="ghost" size="icon" title="Tela Cheia">
@@ -73,7 +88,7 @@ export function ReportViewer({ dashboard, onBack }: ReportViewerProps) {
       {/* Área do Conteúdo (Iframe) */}
       <div className="flex-1 p-6 overflow-hidden flex flex-col items-center justify-center relative">
         
-        {/* Placeholder */}
+        {/* Iframe do PowerBI */}
         {reportUrl ? (
           <div className="w-full h-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative flex-1 min-h-[600px]">
             <iframe 
@@ -108,11 +123,11 @@ export function ReportViewer({ dashboard, onBack }: ReportViewerProps) {
                 </div>
                 <div className="flex justify-between py-1 border-b border-slate-200 border-dashed">
                   <span className="text-slate-500">Workspace:</span>
-                  <span className="text-slate-700">Sherwin-Williams (Padrão)</span>
+                  <span className="text-slate-700">{dashboard.workspace_name || "Padrão"}</span>
                 </div>
                 <div className="flex justify-between py-1">
-                  <span className="text-slate-500">Tipo:</span>
-                  <span className="text-slate-700">{dashboard.type}</span>
+                  <span className="text-slate-500">Status:</span>
+                  <span className="text-slate-700">{dashboard.active ? "Ativo" : "Inativo"}</span>
                 </div>
               </div>
             </div>

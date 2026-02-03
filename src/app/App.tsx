@@ -5,7 +5,13 @@ import { LoginPage } from "@/app/components/LoginPage";
 import { Sidebar, SidebarView } from "@/app/components/Sidebar";
 import { Toaster } from "@/app/components/ui/sonner";
 
+// ✅ 1. Importamos o novo Dashboard do Cliente (que busca do banco)
+const ClientDashboard = lazy(() => import("@/app/components/ClientDashboard").then(m => ({ default: m.ClientDashboard })));
+
+// Mantemos o DashboardsView apenas se você quiser usar para o Admin no futuro, 
+// mas para "Meus Relatórios" usaremos o de cima.
 const DashboardsView = lazy(() => import("@/app/components/DashboardsView").then(m => ({ default: m.DashboardsView })));
+
 const ReportViewer = lazy(() => import("@/app/components/ReportViewer").then(m => ({ default: m.ReportViewer })));
 const ClientsListView = lazy(() => import("@/app/components/ClientsListView").then(m => ({ default: m.ClientsListView })));
 const WorkspacesListView = lazy(() => import("@/app/components/WorkspacesListView").then(m => ({ default: m.WorkspacesListView })));
@@ -15,10 +21,10 @@ const AccessLogsView = lazy(() => import("@/app/components/AccessLogsView").then
 
 function AppContent() {
   const { isAuthenticated, user, loading } = useAuth();
-  const { dashboards, companies } = useData();
+  const { dashboards } = useData(); // Não precisamos mais filtrar dashboards aqui para a home
   
   const [activeView, setActiveView] = useState<SidebarView>('reports');
-  const [selectedDashboardId, setSelectedDashboardId] = useState<string | null>(null);
+  const [selectedReport, setSelectedReport] = useState<any | null>(null);
 
   if (loading) {
     return (
@@ -35,22 +41,26 @@ function AppContent() {
     return <LoginPage />;
   }
 
-  if (selectedDashboardId) {
-    const dashboard = dashboards.find(d => d.id === selectedDashboardId);
+  if (selectedReport) {
+    // O ClientDashboard já trouxe o objeto completo do relatório (embed_url, etc.).
+    // Mantemos compatibilidade tentando usar o próprio objeto ou buscar no contexto se necessário.
+    const dashboard = selectedReport || dashboards.find(d => d.id === selectedReport.id) || {
+       id: selectedReport.id,
+       title: 'Relatório Carregando...',
+       embed_url: selectedReport.embedded_url || selectedReport.embedUrl || '',
+       company_id: user?.company_id || ''
+    };
+
     return (
       <Suspense fallback={<div className="p-10 text-center">Carregando relatório...</div>}>
         <ReportViewer
-          dashboardId={selectedDashboardId}
-          dashboard={dashboard}
-          onBack={() => setSelectedDashboardId(null)}
+          dashboardId={String(selectedReport.id)}
+          dashboard={dashboard as any}
+          onBack={() => setSelectedReport(null)}
         />
       </Suspense>
     );
   }
-
-  const userCompanyId = user?.company_id;
-  const isAdmin = user?.role === 'admin';
-  const visibleDashboards = isAdmin ? dashboards : dashboards.filter(d => d.company_id === userCompanyId);
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
@@ -78,13 +88,10 @@ function AppContent() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
           }>
-            {/* 1. VISUALIZAÇÃO DE RELATÓRIOS (CONSUMO) */}
+            {/* 1. VISUALIZAÇÃO DE RELATÓRIOS (CORRIGIDO) */}
             {activeView === 'reports' && (
-              <DashboardsView
-                dashboards={visibleDashboards}
-                companies={companies}
-                onViewReport={setSelectedDashboardId}
-              />
+              // ✅ Agora chamamos o componente que busca no banco!
+              <ClientDashboard onViewReport={(report) => setSelectedReport(report)} />
             )}
 
             {/* 2. GESTÃO DE RELATÓRIOS (ADMIN) */}
@@ -101,7 +108,7 @@ function AppContent() {
             {/* 5. GESTÃO DE USUÁRIOS */}
             {activeView === 'users' && <UsersManagementView />} 
 
-            {/* 6. LOGS DE ACESSO (NOVO) */}
+            {/* 6. LOGS DE ACESSO */}
             {activeView === 'logs' && <AccessLogsView />}
 
           </Suspense>

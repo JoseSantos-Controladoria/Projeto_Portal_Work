@@ -63,7 +63,14 @@ export function UserRegistrationModal({ isOpen, onClose, userIdToEdit, onSuccess
       if (userIdToEdit) {
         const userGroups = await userService.getUserGroups(userIdToEdit);
         if (userGroups && Array.isArray(userGroups)) {
-             const groupIds = userGroups.map((g: any) => g.group_id);
+             // 🔴 ANTES (ERRADO): Pegava todos os grupos da lista
+             // const groupIds = userGroups.map((g: any) => g.group_id);
+
+             // 🟢 AGORA (CERTO): Filtra apenas onde user_associated é true
+             const groupIds = userGroups
+                .filter((g: any) => g.user_associated === true)
+                .map((g: any) => g.group_id);
+             
              setSelectedGroups(groupIds);
         }
       }

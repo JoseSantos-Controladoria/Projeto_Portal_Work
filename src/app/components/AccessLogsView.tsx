@@ -1,114 +1,46 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
-  Search, 
-  Filter, 
-  Download, 
-  FileText, 
-  User, 
-  Users, 
-  Clock,
-  ArrowUpRight,
-  XCircle
+  Search, Filter, Download, FileText, Users, Clock, Loader2
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/app/components/ui/table";
 import { Badge } from "@/app/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/app/components/ui/select";
-import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar";
-
-// Interface atualizada conforme a regra de negócio
-interface AccessLog {
-  id: string;
-  timestamp: string;      // Data/Hora
-  userName: string;       // Usuário
-  userEmail: string;
-  userAvatar?: string;
-  group: string;          // Grupo
-  reportName: string;     // Relatório
-  action: 'OPEN REPORT' | 'CLOSE REPORT'; // Ação Específica
-}
-
-// DADOS MOCKADOS (Simulando o histórico real)
-const MOCK_LOGS: AccessLog[] = [
-  { 
-    id: '1', 
-    timestamp: '21/01/2026 14:45:12', 
-    userName: 'Roberto Almeida', 
-    userEmail: 'roberto@workon.com', 
-    group: 'Diretoria Executiva',
-    reportName: 'Performance de Vendas - Janeiro', 
-    action: 'OPEN REPORT' 
-  },
-  { 
-    id: '2', 
-    timestamp: '21/01/2026 14:30:00', 
-    userName: 'Fernanda Costa', 
-    userEmail: 'fernanda@pg.com', 
-    group: 'Gerentes Regionais',
-    reportName: 'Execução no PDV', 
-    action: 'OPEN REPORT' 
-  },
-  { 
-    id: '3', 
-    timestamp: '21/01/2026 14:15:22', 
-    userName: 'Roberto Almeida', 
-    userEmail: 'roberto@workon.com', 
-    group: 'Diretoria Executiva',
-    reportName: 'Ruptura de Estoque', 
-    action: 'CLOSE REPORT' 
-  },
-  { 
-    id: '4', 
-    timestamp: '21/01/2026 13:50:05', 
-    userName: 'Juliana Silva', 
-    userEmail: 'juliana@semptcl.com', 
-    group: 'Marketing Digital',
-    reportName: 'ROI de Campanhas', 
-    action: 'OPEN REPORT' 
-  },
-  { 
-    id: '5', 
-    timestamp: '21/01/2026 11:20:18', 
-    userName: 'Ricardo Oliveira', 
-    userEmail: 'ricardo@Sherwin-Williams.com', 
-    group: 'Time de Trade',
-    reportName: 'Status Day (Produtividade)', 
-    action: 'OPEN REPORT' 
-  },
-  { 
-    id: '6', 
-    timestamp: '21/01/2026 11:15:00', 
-    userName: 'Ricardo Oliveira', 
-    userEmail: 'ricardo@Sherwin-Williams.com', 
-    group: 'Time de Trade',
-    reportName: 'Status Day (Produtividade)', 
-    action: 'CLOSE REPORT' 
-  },
-];
+import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
+import { logService, LogEntry } from "@/services/logService";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export function AccessLogsView() {
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [filterAction, setFilterAction] = useState("all");
 
-  const filteredLogs = MOCK_LOGS.filter(log => {
+  // Carregar dados reais ao montar
+  useEffect(() => {
+    loadLogs();
+  }, []);
+
+  const loadLogs = async () => {
+    setIsLoading(true);
+    const data = await logService.getAll();
+    setLogs(data);
+    setIsLoading(false);
+  };
+
+  const filteredLogs = logs.filter(log => {
+    const searchLower = searchTerm.toLowerCase();
     const matchesSearch = 
-      log.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.reportName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.group.toLowerCase().includes(searchTerm.toLowerCase());
+      log.user_name?.toLowerCase().includes(searchLower) ||
+      log.report_name?.toLowerCase().includes(searchLower) ||
+      log.group_name?.toLowerCase().includes(searchLower);
       
     const matchesAction = filterAction === "all" || log.action === filterAction;
 
@@ -124,12 +56,12 @@ export function AccessLogsView() {
           <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
             Logs de Acesso
           </h1>
-          <p className="text-slate-500 text-sm">Histórico de visualização de relatórios pelos usuários.</p>
+          <p className="text-slate-500 text-sm">Histórico real de visualização de relatórios.</p>
         </div>
         
-        <Button variant="outline" className="text-slate-600 gap-2">
-          <Download className="w-4 h-4" />
-          Exportar CSV
+        <Button variant="outline" onClick={loadLogs} className="text-slate-600 gap-2">
+           {isLoading ? <Loader2 className="animate-spin w-4 h-4"/> : <Download className="w-4 h-4" />}
+           Atualizar Lista
         </Button>
       </div>
 
@@ -175,7 +107,16 @@ export function AccessLogsView() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredLogs.length > 0 ? (
+            {isLoading ? (
+               <TableRow>
+                 <TableCell colSpan={5} className="h-24 text-center text-slate-500">
+                    <div className="flex justify-center items-center gap-2">
+                      <Loader2 className="animate-spin w-5 h-5 text-blue-600"/>
+                      Carregando logs...
+                    </div>
+                 </TableCell>
+               </TableRow>
+            ) : filteredLogs.length > 0 ? (
               filteredLogs.map((log) => (
                 <TableRow key={log.id} className="hover:bg-slate-50/50">
                   
@@ -183,7 +124,7 @@ export function AccessLogsView() {
                   <TableCell>
                     <div className="flex items-center gap-2 text-slate-600 font-mono text-xs">
                       <Clock className="w-3.5 h-3.5 text-slate-400" />
-                      {log.timestamp}
+                      {log.created_at ? format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss") : '-'}
                     </div>
                   </TableCell>
 
@@ -191,14 +132,13 @@ export function AccessLogsView() {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8 border border-slate-100">
-                        <AvatarImage src={log.userAvatar} />
-                        <AvatarFallback className="bg-slate-100 text-slate-600 text-xs font-bold">
-                          {log.userName.charAt(0)}
+                        <AvatarFallback className="bg-blue-100 text-blue-700 text-xs font-bold">
+                          {log.user_name?.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-slate-700">{log.userName}</span>
-                        <span className="text-xs text-slate-500">{log.userEmail}</span>
+                        <span className="text-sm font-medium text-slate-700">{log.user_name}</span>
+                        <span className="text-xs text-slate-500">{log.user_email}</span>
                       </div>
                     </div>
                   </TableCell>
@@ -207,7 +147,7 @@ export function AccessLogsView() {
                   <TableCell>
                     <div className="flex items-center gap-2 text-sm text-slate-600">
                       <Users className="w-4 h-4 text-slate-400" />
-                      {log.group}
+                      {log.group_name || <span className="text-slate-400 italic">Não identificado</span>}
                     </div>
                   </TableCell>
 
@@ -215,23 +155,16 @@ export function AccessLogsView() {
                   <TableCell>
                     <div className="flex items-center gap-2 font-medium text-slate-700">
                       <FileText className="w-4 h-4 text-blue-500" />
-                      {log.reportName}
+                      {log.report_name || <span className="text-slate-400">Desconhecido</span>}
                     </div>
                   </TableCell>
 
-                  {/* Ação (OPEN/CLOSE) */}
+                  {/* Ação */}
                   <TableCell className="text-right">
-                    {log.action === 'OPEN REPORT' ? (
-                      <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-100 gap-1.5 pr-3">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        OPEN REPORT
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-slate-500 border-slate-200 gap-1.5 bg-slate-50 pr-3">
-                        <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                        CLOSE REPORT
-                      </Badge>
-                    )}
+                    <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-100 gap-1.5 pr-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        {log.action}
+                    </Badge>
                   </TableCell>
                 </TableRow>
               ))
@@ -240,7 +173,7 @@ export function AccessLogsView() {
                 <TableCell colSpan={5} className="h-32 text-center text-slate-500">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <Search className="w-8 h-8 opacity-20" />
-                    <p>Nenhum log encontrado para os filtros atuais.</p>
+                    <p>Nenhum log encontrado.</p>
                   </div>
                 </TableCell>
               </TableRow>
