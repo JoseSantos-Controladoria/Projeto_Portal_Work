@@ -13,26 +13,22 @@ import { logService } from "@/services/logService";
 
 interface ReportViewerProps {
   dashboardId: string;
-  dashboard?: Dashboard | any; // Flexibilizando o tipo para aceitar dados do banco
+  dashboard?: Dashboard | any; 
   onBack: () => void;
 }
 
 export function ReportViewer({ dashboard, onBack }: ReportViewerProps) {
   const { user } = useAuth();
 
-  // ✅ GATILHO DE LOG: Registra o acesso assim que o componente monta ou muda de relatório
   useEffect(() => {
-    // Só registra se tivermos Usuário e ID do Relatório válidos
     if (user?.id && dashboard?.id) {
-       // Converte ID para numero (banco espera int) e dispara o log
-       // 'OPEN REPORT' é a ação padrão de visualização
+
        logService.logAction(user.id, 'OPEN REPORT', Number(dashboard.id));
     }
   }, [dashboard?.id, user?.id]);
 
   if (!dashboard) return null;
 
-  // Compatibilidade: Tenta pegar 'embedUrl' (frontend/mock) ou 'embedded_url' (backend)
   const reportUrl = dashboard.embedUrl || dashboard.embedded_url || "";
 
   return (
@@ -99,7 +95,6 @@ export function ReportViewer({ dashboard, onBack }: ReportViewerProps) {
             />
           </div>
         ) : (
-          /* Placeholder de Erro / Configuração */
           <div className="max-w-2xl w-full bg-white rounded-xl shadow-lg p-8 text-center border border-slate-100">
             <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
               <Maximize2 className="w-8 h-8 text-blue-600" />

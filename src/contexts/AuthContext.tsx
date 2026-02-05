@@ -1,7 +1,7 @@
 // src/contexts/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Profile, UserRole } from '@/types';
-import api from '@/services/api'; // Importe o serviço que criamos
+import api from '@/services/api'; 
 
 interface AuthContextType {
   user: User | null;
@@ -10,7 +10,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   loading: boolean;
-  errorMessage: string | null; // Adicionei para exibir erros do back
+  errorMessage: string | null; 
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,7 +38,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string): Promise<boolean> => {
     setErrorMessage(null);
     try {
-      // 1. Mapeamento Front -> Back (email vira username)
       const response = await api.post('/login', { 
         username: email, 
         password: password 
@@ -46,7 +45,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const data = response.data;
 
-      // 2. Tratamento de Erro no padrão do Back (Status 200 com flag ERROR)
       if (data.status === 'ERROR') {
         setErrorMessage(data.error_message || 'Erro ao realizar login');
         return false;
@@ -55,8 +53,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.status === 'SUCCESS' && data.userdata) {
         const backendUser = data.userdata;
 
-        // 3. Adaptador (Adapter Pattern) Back -> Front
-        // Precisamos decidir a Role baseado no profile_name ou ID
         const derivedRole: UserRole = backendUser.profile_name?.toLowerCase().includes('admin') 
           ? 'admin' 
           : 'client';
@@ -67,14 +63,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name: backendUser.name,
           role: derivedRole,
           company_id: backendUser.company_id?.toString(),
-          createdAt: new Date().toISOString(), // Back não mandou data de criação
+          createdAt: new Date().toISOString(), 
         };
 
-        // 4. Salvar Sessão
         localStorage.setItem('tradedata_token', data.sessionToken);
         localStorage.setItem('tradedata_user', JSON.stringify(userAdapted));
         
-        // Se quiser salvar os grupos também:
         if (data.groups) {
            localStorage.setItem('tradedata_groups', JSON.stringify(data.groups));
         }
@@ -87,7 +81,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     } catch (error) {
       console.error('Erro na requisição:', error);
-      // Tratamento se a API estiver fora do ar (Erro 500/404)
       setErrorMessage('Falha de conexão com o servidor.');
       return false;
     }

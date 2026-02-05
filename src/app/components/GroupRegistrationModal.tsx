@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from "@/app/components/ui/select";
 import { Checkbox } from "@/app/components/ui/checkbox";
-import { Switch } from "@/app/components/ui/switch"; // Usando Switch para status
+import { Switch } from "@/app/components/ui/switch"; 
 import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
 import { groupService } from "@/services/groupService";
 import { toast } from "sonner";
@@ -34,59 +34,53 @@ import { toast } from "sonner";
 interface GroupRegistrationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  groupIdToEdit?: number | null; // Suporte a edição
+  groupIdToEdit?: number | null; 
   onSuccess?: () => void;
 }
 
 export function GroupRegistrationModal({ isOpen, onClose, groupIdToEdit, onSuccess }: GroupRegistrationModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
-
-  // Listas vindas do Banco
   const [customersList, setCustomersList] = useState<any[]>([]);
   const [usersList, setUsersList] = useState<any[]>([]);
-
-  // Estado do Formulário
   const [formData, setFormData] = useState({
     name: "",
-    customer_id: "", // String para o Select, depois converto
+    customer_id: "", 
     active: true
   });
 
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
   const [userSearch, setUserSearch] = useState("");
 
-  // Carregar dados ao abrir
   useEffect(() => {
     if (isOpen) {
-      loadAuxiliaryData();
+      loadData(); 
       
       if (!groupIdToEdit) {
-        // Reset para Novo Grupo
         setFormData({ name: "", customer_id: "", active: true });
         setSelectedUsers([]);
       }
     }
   }, [isOpen, groupIdToEdit]);
 
-  const loadAuxiliaryData = async () => {
+  const loadData = async () => {
     setIsLoadingData(true);
     try {
-      const data = await groupService.getAuxiliaryData();
-      setCustomersList(data.customers);
-      setUsersList(data.users);
+      const auxData = await groupService.getAuxiliaryData();
+      setCustomersList(auxData.customers);
+      setUsersList(auxData.users);
 
-      // Se for edição, carrega os dados do grupo e seus membros
       if (groupIdToEdit) {
-        // TODO: Implementar getById no groupService para pegar nome/cliente do grupo
-        // Por enquanto, carregamos os membros:
+        const group = await groupService.getById(groupIdToEdit);
+        
+        setFormData({
+            name: group.name || "",
+            customer_id: group.customer_id ? String(group.customer_id) : "",
+            active: group.active !== false
+        });
+
         const members = await groupService.getUsersByGroup(groupIdToEdit);
-        // O endpoint retorna os usuários com flag user_associated=true? 
-        // Ou retorna lista de usuários do grupo?
-        // Assumindo lista de users do grupo:
         if (members && Array.isArray(members)) {
-             // O endpoint getUsersByGroup retorna objetos User completos. 
-             // Se retornar { user_id: 1, ... } mapeamos assim:
              const memberIds = members.map((m: any) => m.user_id || m.id);
              setSelectedUsers(memberIds);
         }
@@ -94,7 +88,7 @@ export function GroupRegistrationModal({ isOpen, onClose, groupIdToEdit, onSucce
 
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
-      toast.error("Erro ao carregar listas.");
+      toast.error("Erro ao carregar grupo.");
     } finally {
       setIsLoadingData(false);
     }
@@ -132,10 +126,9 @@ export function GroupRegistrationModal({ isOpen, onClose, groupIdToEdit, onSucce
     );
   };
 
-  // Filtro de usuários na lista da direita
   const filteredUsers = usersList.filter(user => 
-    user.name.toLowerCase().includes(userSearch.toLowerCase()) || 
-    user.email.toLowerCase().includes(userSearch.toLowerCase())
+    (user.name?.toLowerCase() || '').includes(userSearch.toLowerCase()) || 
+    (user.email?.toLowerCase() || '').includes(userSearch.toLowerCase())
   );
 
   return (
@@ -263,7 +256,7 @@ export function GroupRegistrationModal({ isOpen, onClose, groupIdToEdit, onSucce
                       >
                         <Avatar className="w-9 h-9 border-2 border-white shadow-sm">
                           <AvatarFallback className="text-xs bg-slate-200 text-slate-600 font-bold">
-                            {user.name.charAt(0).toUpperCase()}
+                            {user.name ? user.name.charAt(0).toUpperCase() : '?'}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col">

@@ -3,7 +3,6 @@ import { Button } from "@/app/components/ui/button";
 import { 
   LogOut, 
   LayoutGrid, 
-  // BarChart3, // Removido se não for usar, mas ok manter
   Users,
   Building2,
   ScrollText,
@@ -27,7 +26,6 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
     onViewChange(view);
   };
 
-  // Helper simples para checar admin
   const isAdmin = user?.role === 'admin';
 
   const NavItem = ({ id, label, icon: Icon }: { id: SidebarView, label: string, icon: any }) => {
@@ -68,7 +66,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
       {/* Navegação Principal */}
       <nav className="flex-1 px-4 py-6 overflow-y-auto custom-scrollbar space-y-8">
         
-        {/* GRUPO 1: OPERACIONAL (Todo mundo vê) */}
+        {/* GRUPO 1: OPERACIONAL*/}
         <div>
           <p className="px-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
             <LayoutGrid className="w-3 h-3" />
@@ -101,7 +99,6 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
       {/* Footer / User Profile */}
       <div className="p-4 border-t border-slate-800 bg-slate-950/30">
         <div className="flex items-center gap-3 mb-4 px-2">
-          {/* Avatar com as iniciais da empresa ou do user */}
           <div className={cn(
             "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border",
             isAdmin 
@@ -115,7 +112,6 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
               {user?.name || 'Usuário'}
             </p>
             <p className="text-xs text-slate-500 truncate capitalize">
-              {/* Mostra o nome da empresa se for cliente, ou o cargo se for admin */}
               {user?.role === 'admin' ? 'Administrador' : user?.company_id?.toUpperCase()}
             </p>
           </div>

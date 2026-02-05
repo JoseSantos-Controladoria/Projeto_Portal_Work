@@ -3,8 +3,7 @@ import {
   Search, 
   Plus, 
   Pencil, 
-  Trash2, 
-  MoreHorizontal,
+  Trash2,
   Users, 
   Building2, 
   Loader2,
@@ -17,13 +16,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/app/components/ui/table";
 import { Badge } from "@/app/components/ui/badge";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, 
-  DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/app/components/ui/dropdown-menu";
 import { toast } from "sonner"; 
-
-// Certifique-se de que o Modal está na mesma pasta ou ajuste o import
 import { GroupRegistrationModal } from "./GroupRegistrationModal";
 import { groupService, Group } from "@/services/groupService";
 
@@ -38,7 +31,6 @@ export function GroupsListView() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // O endpoint getAll já traz o nome do cliente e a contagem de usuários
       const data = await groupService.getAll({ page: 1, pagesize: 50, orderby: 'name' });
       setGroups(data.items || []);
     } catch (error) {
@@ -74,7 +66,6 @@ export function GroupsListView() {
     }
   };
 
-  // Filtro local (Nome do Grupo ou Nome do Cliente)
   const filteredGroups = groups.filter(group => 
     (group.name?.toLowerCase() || '').includes(filterSearch.toLowerCase()) ||
     (group.customer?.toLowerCase() || '').includes(filterSearch.toLowerCase())
@@ -177,23 +168,27 @@ export function GroupsListView() {
                   </TableCell>
 
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600">
-                          <MoreHorizontal className="h-4 w-4" />
+                    <div className="flex items-center justify-end gap-2">
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            onClick={() => handleEdit(group.id)}
+                            title="Editar"
+                        >
+                            <Pencil className="h-4 w-4" />
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleEdit(group.id)}>
-                            <Pencil className="mr-2 h-4 w-4" /> Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(group.id)}>
-                            <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                        
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleDelete(group.id)}
+                            title="Excluir"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

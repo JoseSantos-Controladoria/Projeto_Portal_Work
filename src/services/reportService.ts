@@ -18,6 +18,21 @@ export const reportService = {
     return await crudService.getAll<Report>('report', pagination);
   },
 
+  // ✅ NOVO: Buscar relatório por ID (Para o Editar funcionar)
+  getById: async (id: number) => {
+    try {
+      const response = await crudService.getAll<Report>('report', undefined, { id: id });
+      
+      if (response.items && response.items.length > 0) {
+        return response.items[0];
+      }
+      throw new Error("Relatório não encontrado.");
+    } catch (error) {
+      console.error(`❌ [ReportService] Erro ao buscar relatório ${id}:`, error);
+      throw error;
+    }
+  },
+
   // 2. Dados Auxiliares
   getAuxiliaryData: async () => {
     try {
@@ -32,10 +47,8 @@ export const reportService = {
   // 3. Salvar (COM RETURN PARA PEGAR O ID)
   save: async (data: Partial<Report>) => {
     if (data.id) {
-      // ✅ ADICIONEI O RETURN AQUI
       return await crudService.update('report', data.id, data);
     } else {
-      // ✅ E AQUI TAMBÉM
       return await crudService.create('report', data);
     }
   },

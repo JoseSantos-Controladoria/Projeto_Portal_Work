@@ -11,7 +11,7 @@ export interface LogEntry {
 }
 
 export const logService = {
-  // Registrar ação (Disparado pelo ReportViewer)
+
   logAction: async (userId: string | number, action: string, reportId?: number) => {
     try {
       await api.post('/logs', {
@@ -24,7 +24,7 @@ export const logService = {
     }
   },
 
-  // Buscar todos os logs (Para o AccessLogsView)
+
   getAll: async () => {
     try {
       const response = await api.get('/logs');

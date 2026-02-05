@@ -25,7 +25,6 @@ export function WorkspaceRegistrationModal({
   
   const [isLoading, setIsLoading] = useState(false);
 
-  // Apenas Nome e URL
   const [formData, setFormData] = useState({
     name: "",
     url: ""

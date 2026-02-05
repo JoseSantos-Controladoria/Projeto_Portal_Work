@@ -12,10 +12,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/app/components/ui/select";
 import { Switch } from "@/app/components/ui/switch";
-import { Checkbox } from "@/app/components/ui/checkbox"; // Certifique-se de ter este componente
-import { ScrollArea } from "@/app/components/ui/scroll-area"; // Certifique-se de ter este componente
+import { Checkbox } from "@/app/components/ui/checkbox"; 
+import { ScrollArea } from "@/app/components/ui/scroll-area"; 
 import { reportService } from "@/services/reportService";
-import { groupService } from "@/services/groupService"; // Importe o groupService
+import { groupService } from "@/services/groupService"; 
 import { toast } from "sonner";
 
 interface ReportModalProps {
@@ -27,13 +27,12 @@ interface ReportModalProps {
 }
 
 export function ReportRegistrationModal({ 
-  isOpen, onClose, reportIdToEdit, initialData, onSuccess 
+  isOpen, onClose, reportIdToEdit, onSuccess 
 }: ReportModalProps) {
   
   const [isLoading, setIsLoading] = useState(false);
   const [workspacesList, setWorkspacesList] = useState<any[]>([]);
-  
-  // Estado para os grupos
+
   const [allGroups, setAllGroups] = useState<any[]>([]);
   const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>([]);
 
@@ -47,46 +46,43 @@ export function ReportRegistrationModal({
 
   useEffect(() => {
     if (isOpen) {
-      loadInitialData();
+      loadData();
     }
-  }, [isOpen, reportIdToEdit, initialData]);
+  }, [isOpen, reportIdToEdit]);
 
-  const loadInitialData = async () => {
+  const loadData = async () => {
     setIsLoading(true);
     try {
-      // 1. Carrega Workspaces (para o Select)
       const auxData = await reportService.getAuxiliaryData();
       if (auxData?.workspaces) {
         setWorkspacesList(auxData.workspaces);
       }
 
-      // 2. Preenche formulário básico
-      if (reportIdToEdit && initialData) {
+      if (reportIdToEdit) {
+        const report = await reportService.getById(reportIdToEdit);
+        
         setFormData({
-          title: initialData.title || "",
-          description: initialData.description || "",
-          workspace_id: initialData.workspace_id ? String(initialData.workspace_id) : "",
-          embedded_url: initialData.embedded_url || "",
-          active: initialData.active ?? true
+          title: report.title || "",
+          description: report.description || "",
+          workspace_id: report.workspace_id ? String(report.workspace_id) : "",
+          embedded_url: report.embedded_url || "",
+          active: report.active !== false 
         });
 
-        // 3a. Modo Edição: Busca grupos vinculados
         await loadGroupsForEdit(reportIdToEdit);
 
       } else {
-        // Reset para Novo Cadastro
+
         setFormData({ 
           title: "", description: "", workspace_id: "", 
           embedded_url: "", active: true 
         });
         setSelectedGroupIds([]);
-
-        // 3b. Modo Novo: Busca todos os grupos disponíveis
         await loadAllGroups();
       }
 
     } catch (error) {
-      console.error("Erro ao carregar dados iniciais:", error);
+      console.error("Erro ao carregar dados:", error);
       toast.error("Erro ao carregar dados do formulário.");
     } finally {
       setIsLoading(false);
@@ -95,7 +91,7 @@ export function ReportRegistrationModal({
 
   const loadAllGroups = async () => {
     try {
-      const response = await groupService.getAll({ pagesize: 100 }); // Traz bastante grupos
+      const response = await groupService.getAll({ pagesize: 100 }); 
       setAllGroups(response.items || []);
     } catch (error) {
       console.error("Erro ao listar grupos:", error);
@@ -104,13 +100,10 @@ export function ReportRegistrationModal({
 
   const loadGroupsForEdit = async (id: number) => {
     try {
-      // O endpoint getReportGroups retorna TODOS os grupos, com a flag 'group_associated'
       const groupsFromApi = await reportService.getReportGroups(id);
       
-      // Mapeia para o formato de lista
       setAllGroups(groupsFromApi);
 
-      // Filtra os IDs que já estão associados
       const associatedIds = groupsFromApi
         .filter((g: any) => g.group_associated === true)
         .map((g: any) => g.group_id);
@@ -144,20 +137,6 @@ export function ReportRegistrationModal({
 
     setIsLoading(true);
     try {
-      // 1. Salva o Relatório
-      // Se save retornar o objeto ou ID, melhor. Se não, assumimos edição ou criação void
-      // Como o service atual retorna void no create, precisamos ajustar se for criação.
-      // Mas o seu CRUD genérico create retorna { id: ... }. Vamos assumir isso.
-      
-      // Pequeno hack: vamos olhar como o reportService.save foi implementado.
-      // Ele chama crudService.create ou update. O create retorna response.data (que tem o ID).
-      // Mas o save do reportService não estava retornando nada.
-      // DICA: Vá no reportService e coloque "return" antes do crudService.create/update
-      
-      // Se não quiser mexer no service agora, a lógica de edição funciona.
-      // Para criação, sem o ID de volta, não conseguimos salvar os grupos.
-      // Vou assumir que você ajustou o reportService.ts para: "return await crudService..."
-      
       let savedReportId = reportIdToEdit;
 
       if (reportIdToEdit) {
@@ -167,23 +146,21 @@ export function ReportRegistrationModal({
           workspace_id: Number(formData.workspace_id)
         });
       } else {
-        // Criação
         const res: any = await reportService.save({
           ...formData,
           workspace_id: Number(formData.workspace_id)
         });
-        // O backend retorna { status: 'SUCCESS', id: 123, ... }
+        
         if (res && res.id) {
           savedReportId = res.id;
         }
       }
 
-      // 2. Salva os Grupos (Se tivermos um ID válido)
       if (savedReportId) {
         await reportService.saveGroups(savedReportId, selectedGroupIds);
         toast.success("Relatório e permissões salvos com sucesso!");
       } else {
-        toast.warning("Relatório salvo, mas não foi possível vincular os grupos (ID não retornado).");
+        toast.warning("Relatório salvo, mas não foi possível vincular os grupos.");
       }
 
       if (onSuccess) onSuccess();
@@ -299,8 +276,6 @@ export function ReportRegistrationModal({
                 <ScrollArea className="h-[200px] pr-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {allGroups.map((group) => {
-                       // O objeto pode vir com 'id' (groupService) ou 'group_id' (reportService)
-                       // Vamos normalizar
                        const gId = group.id || group.group_id;
                        const gName = group.name || group.group_name;
                        const cName = group.customer?.name || group.customer_name || "Cliente n/d";

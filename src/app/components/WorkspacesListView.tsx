@@ -1,17 +1,14 @@
 import { useState, useEffect } from "react";
 import { 
-  Search, Plus, Pencil, Trash2, MoreHorizontal,
+  Search, Plus, Pencil, Trash2,
   Layout, Loader2, ExternalLink
-} from "lucide-react";
+} from "lucide-react"; 
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/app/components/ui/table";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, 
-  DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/app/components/ui/dropdown-menu";
+
 import { toast } from "sonner"; 
 
 import { WorkspaceRegistrationModal } from "./WorkspaceRegistrationModal";
@@ -136,24 +133,28 @@ export function WorkspacesListView() {
                   </TableCell>
 
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
-                          <MoreHorizontal className="h-4 w-4" />
+                    <div className="flex items-center justify-end gap-2">
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            onClick={() => handleEdit(item)}
+                            title="Editar"
+                        >
+                            <Pencil className="h-4 w-4" />
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleEdit(item)}>
-                            <Pencil className="mr-2 h-4 w-4" /> Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(item.id)}>
-                            <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+                        
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleDelete(item.id)}
+                            title="Excluir"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+                  </TableCell> 
                 </TableRow>
               ))
             ) : (

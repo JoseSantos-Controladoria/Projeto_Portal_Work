@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { 
-  Search, Plus, Pencil, Trash2, MoreHorizontal,
+  Search, Plus, Pencil, Trash2, 
   ShieldAlert, ShieldCheck, User as UserIcon, Building, Loader2 
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
@@ -11,9 +11,13 @@ import {
 import { Badge } from "@/app/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, 
-  DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/app/components/ui/dropdown-menu";
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/app/components/ui/pagination";
 import { toast } from "sonner"; 
 
 import { UserRegistrationModal } from "./UserRegistrationModal";
@@ -23,9 +27,9 @@ import { crudService } from "@/services/crudService";
 export function UsersManagementView() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // Mapa para traduzir company_id em Nome da Empresa
   const [companiesMap, setCompaniesMap] = useState<Record<number, string>>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const [filterSearch, setFilterSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,16 +38,11 @@ export function UsersManagementView() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // 1. Busca Usuários
-      const userData = await userService.getAll({ page: 1, pagesize: 50, orderby: 'name' });
-      // Segurança: garante que items é um array, mesmo que venha undefined
+      const userData = await userService.getAll({ page: 1, pagesize: 1000, orderby: 'name' });
       setUsers(userData.items || []);
 
-      // 2. Busca Empresas (apenas para montar o mapa de nomes)
       const companiesData = await crudService.getAll('company');
       const compMap: Record<number, string> = {};
-      
-      // Segurança: garante que items existe
       if (companiesData && companiesData.items) {
           companiesData.items.forEach((c: any) => { compMap[c.id] = c.name; });
       }
@@ -60,6 +59,10 @@ export function UsersManagementView() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterSearch]);
 
   const handleEdit = (id: string) => {
     setSelectedUserId(id);
@@ -82,12 +85,6 @@ export function UsersManagementView() {
     }
   };
 
-  // Filtro Front-end Seguro
-  const filteredUsers = users.filter(user => 
-    (user.name?.toLowerCase() || '').includes(filterSearch.toLowerCase()) ||
-    (user.email?.toLowerCase() || '').includes(filterSearch.toLowerCase())
-  );
-
   const renderRoleBadge = (roleName?: string) => {
     const role = roleName?.toLowerCase() || 'cliente';
     if (role.includes('admin')) {
@@ -99,10 +96,20 @@ export function UsersManagementView() {
     return <Badge variant="outline" className="text-slate-600 gap-1 bg-slate-50"><UserIcon className="w-3 h-3" /> Cliente</Badge>;
   };
 
+  const filteredUsers = users.filter(user => 
+    (user.name?.toLowerCase() || '').includes(filterSearch.toLowerCase()) ||
+    (user.email?.toLowerCase() || '').includes(filterSearch.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentUsers = filteredUsers.slice(startIndex, endIndex);
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
-      {/* Header e Ações */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -122,7 +129,7 @@ export function UsersManagementView() {
         </div>
       </div>
 
-      {/* Busca Simples */}
+      {/* Busca */}
       <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
         <div className="relative w-full md:w-1/2">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -154,8 +161,8 @@ export function UsersManagementView() {
                   <div className="flex justify-center items-center gap-2"><Loader2 className="animate-spin" /> Carregando...</div>
                 </TableCell>
               </TableRow>
-            ) : filteredUsers.length > 0 ? (
-              filteredUsers.map((user) => (
+            ) : currentUsers.length > 0 ? (
+              currentUsers.map((user) => (
                 <TableRow key={user.id} className="hover:bg-slate-50/50">
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -189,23 +196,27 @@ export function UsersManagementView() {
                   </TableCell>
 
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600">
-                          <MoreHorizontal className="h-4 w-4" />
+                    <div className="flex items-center justify-end gap-2">
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            onClick={() => handleEdit(user.id)}
+                            title="Editar"
+                        >
+                            <Pencil className="h-4 w-4" />
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleEdit(user.id)}>
-                            <Pencil className="mr-2 h-4 w-4" /> Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(user.id)}>
-                            <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                        
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleDelete(user.id)}
+                            title="Excluir"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -218,6 +229,55 @@ export function UsersManagementView() {
             )}
           </TableBody>
         </Table>
+
+        {/* 3. Paginação Estilo "Sheets" */}
+        {!loading && filteredUsers.length > ITEMS_PER_PAGE && (
+          <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-center">
+            <Pagination>
+              <PaginationContent>
+                
+                <PaginationItem>
+                  <PaginationPrevious 
+                    href="#" 
+                    onClick={(e) => { 
+                      e.preventDefault(); 
+                      if (currentPage > 1) setCurrentPage(currentPage - 1); 
+                    }}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                  <PaginationItem key={pageNum}>
+                    <PaginationLink
+                      href="#"
+                      isActive={currentPage === pageNum}
+                      onClick={(e) => { 
+                        e.preventDefault(); 
+                        setCurrentPage(pageNum); 
+                      }}
+                      className="cursor-pointer"
+                    >
+                      {pageNum}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => { 
+                      e.preventDefault(); 
+                      if (currentPage < totalPages) setCurrentPage(currentPage + 1); 
+                    }}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </div>
 
       <UserRegistrationModal 

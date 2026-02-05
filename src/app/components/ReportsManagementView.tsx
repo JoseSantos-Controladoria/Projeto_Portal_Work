@@ -18,7 +18,6 @@ import { toast } from "sonner";
 import { ReportRegistrationModal } from "./ReportRegistrationModal";
 import { reportService, Report } from "@/services/reportService";
 
-// CORREÇÃO AQUI: 'export default function' garante que o Lazy Load funcione
 export default function ReportsManagementsView() {
   const [reports, setReports] = useState<Report[]>([]);
   const [workspacesMap, setWorkspacesMap] = useState<Record<number, string>>({});
@@ -31,13 +30,12 @@ export default function ReportsManagementsView() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // 1. Busca Relatórios e Workspaces
+
       const [repData, auxData] = await Promise.all([
         reportService.getAll({ page: 1, pagesize: 50, orderby: 'title' }),
         reportService.getAuxiliaryData()
       ]);
 
-      // 2. Mapeia ID do Workspace para Nome
       const map: Record<number, string> = {};
       auxData.workspaces.forEach((w: any) => { map[w.id] = w.name; });
       setWorkspacesMap(map);
@@ -174,23 +172,27 @@ export default function ReportsManagementsView() {
                   </TableCell>
 
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleEdit(item)}>
-                            <Pencil className="mr-2 h-4 w-4" /> Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(item.id)}>
-                            <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        onClick={() => handleEdit(item)}
+                        title="Editar"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => handleDelete(item.id)}
+                        title="Excluir"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

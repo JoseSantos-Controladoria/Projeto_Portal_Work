@@ -34,7 +34,6 @@ export function LoginPage() {
       {/* CARD DE LOGIN */}
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-100 relative z-10">
         
-        {/* --- BLOCO DA LOGO SIMPLIFICADO --- */}
         <div className="flex flex-col items-center justify-center mb-10">
           <img 
             src="/images/logo-blue.png" 
@@ -42,12 +41,11 @@ export function LoginPage() {
             className="h-20 w-auto object-contain"
           />
         </div>
-        {/* ---------------------------------- */}
 
         <div className="space-y-6">
           <div className="space-y-2 text-center">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Bem-vindo ao Portal BI
+              Bem-vindo ao Data Hub
             </h1>
             <p className="text-sm text-slate-500">
               Insira suas credenciais para acessar

@@ -38,17 +38,14 @@ interface ClientDashboardProps {
 
 export function ClientDashboard({ onViewReport }: ClientDashboardProps) {
   const { user } = useAuth();
-  
-  // Estados de Dados
+
   const [reports, setReports] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Estados de UI/Filtros
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedWorkspace, setSelectedWorkspace] = useState<string>("all");
   const [workspaces, setWorkspaces] = useState<string[]>([]);
 
-  // Favoritos
   const [favorites, setFavorites] = useState<string[]>(() => {
     const saved = localStorage.getItem('dashboard_favorites');
     return saved ? JSON.parse(saved) : [];
@@ -67,7 +64,6 @@ export function ClientDashboard({ onViewReport }: ClientDashboardProps) {
         const data = await reportService.getMyReports(user.id);
         setReports(data);
 
-        // Extrai workspaces únicos para o filtro
         const uniqueWorkspaces = Array.from(new Set(data.map((r: any) => r.workspace_name).filter(Boolean)));
         setWorkspaces(uniqueWorkspaces as string[]);
 
@@ -89,7 +85,6 @@ export function ClientDashboard({ onViewReport }: ClientDashboardProps) {
     );
   };
 
-  // Filtragem e Ordenação
   const filteredReports = reports.filter(report => {
     const matchesSearch = report.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           report.description?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -133,7 +128,7 @@ export function ClientDashboard({ onViewReport }: ClientDashboardProps) {
           </p>
         </div>
 
-        {/* BARRA DE FERRAMENTAS (Filtros e Busca) - Agora mais sutil à direita */}
+        {/* BARRA DE FERRAMENTAS */}
         <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
             
             {/* Filtro de Workspace */}

@@ -44,29 +44,41 @@ export function UserRegistrationModal({ isOpen, onClose, userIdToEdit, onSuccess
 
   useEffect(() => {
     if (isOpen) {
-      loadAuxiliaryData();
+      loadData(); // Renomeei para loadData pois agora carrega TUDO
       if (!userIdToEdit) {
+        // Reset se for usuário novo
         setFormData({ name: "", email: "", company_id: "", profile_id: "", active: true });
         setSelectedGroups([]);
       }
     }
   }, [isOpen, userIdToEdit]);
 
-  const loadAuxiliaryData = async () => {
+  const loadData = async () => {
     setIsLoadingData(true);
     try {
-      const data = await userService.getAuxiliaryData();
-      setCompaniesList(data.companies);
-      setProfilesList(data.profiles);
-      setAllGroupsList(data.groups);
+      // 1. Carrega listas auxiliares
+      const auxData = await userService.getAuxiliaryData();
+      setCompaniesList(auxData.companies);
+      setProfilesList(auxData.profiles);
+      setAllGroupsList(auxData.groups);
       
+      // 2. Se for EDIÇÃO, busca os dados do usuário específico
       if (userIdToEdit) {
+        // A. Busca dados cadastrais (O QUE FALTAVA!)
+        const user = await userService.getById(userIdToEdit);
+        
+        // Preenche o formulário
+        setFormData({
+            name: user.name || "",
+            email: user.email || "",
+            company_id: user.company_id ? String(user.company_id) : "",
+            profile_id: user.profile_id ? String(user.profile_id) : "",
+            active: user.active !== false // Garante true se vier null/undefined
+        });
+
+        // B. Busca grupos vinculados
         const userGroups = await userService.getUserGroups(userIdToEdit);
         if (userGroups && Array.isArray(userGroups)) {
-             // 🔴 ANTES (ERRADO): Pegava todos os grupos da lista
-             // const groupIds = userGroups.map((g: any) => g.group_id);
-
-             // 🟢 AGORA (CERTO): Filtra apenas onde user_associated é true
              const groupIds = userGroups
                 .filter((g: any) => g.user_associated === true)
                 .map((g: any) => g.group_id);
@@ -77,7 +89,7 @@ export function UserRegistrationModal({ isOpen, onClose, userIdToEdit, onSuccess
 
     } catch (error) {
       console.error("Erro no modal:", error);
-      toast.error("Erro ao carregar listas de opções.");
+      toast.error("Erro ao carregar dados.");
     } finally {
       setIsLoadingData(false);
     }
@@ -134,7 +146,7 @@ export function UserRegistrationModal({ isOpen, onClose, userIdToEdit, onSuccess
         {isLoadingData ? (
           <div className="flex flex-col items-center justify-center py-8 gap-2 text-slate-500">
              <Loader2 className="animate-spin w-8 h-8 text-blue-600" />
-             <span className="text-sm">Carregando listas...</span>
+             <span className="text-sm">Carregando dados...</span>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5 py-2">
@@ -183,11 +195,11 @@ export function UserRegistrationModal({ isOpen, onClose, userIdToEdit, onSuccess
                   </SelectTrigger>
                   <SelectContent>
                     {companiesList.length === 0 ? (
-                       <SelectItem value="disabled" disabled>Nenhuma empresa encontrada</SelectItem>
+                        <SelectItem value="disabled" disabled>Nenhuma empresa encontrada</SelectItem>
                     ) : (
-                       companiesList.map(comp => (
-                         <SelectItem key={comp.id} value={String(comp.id)}>{comp.name}</SelectItem>
-                       ))
+                        companiesList.map(comp => (
+                          <SelectItem key={comp.id} value={String(comp.id)}>{comp.name}</SelectItem>
+                        ))
                     )}
                   </SelectContent>
                 </Select>
@@ -205,8 +217,8 @@ export function UserRegistrationModal({ isOpen, onClose, userIdToEdit, onSuccess
                     <SelectValue placeholder="Defina o perfil..." />
                   </SelectTrigger>
                   <SelectContent>
-                     {profilesList.length === 0 ? (
-                       <SelectItem value="disabled" disabled>Nenhum perfil encontrado</SelectItem>
+                      {profilesList.length === 0 ? (
+                        <SelectItem value="disabled" disabled>Nenhum perfil encontrado</SelectItem>
                     ) : (
                       profilesList.map(prof => (
                         <SelectItem key={prof.id} value={String(prof.id)}>{prof.name}</SelectItem>
@@ -217,7 +229,7 @@ export function UserRegistrationModal({ isOpen, onClose, userIdToEdit, onSuccess
               </div>
             </div>
 
-            {/* Grupos - CORREÇÃO PRINCIPAL AQUI */}
+            {/* Grupos */}
             <div className="space-y-3">
               <Label className="flex items-center gap-2">
                 <Users className="w-3.5 h-3.5 text-slate-500" /> Grupos de Acesso
@@ -228,7 +240,6 @@ export function UserRegistrationModal({ isOpen, onClose, userIdToEdit, onSuccess
                     <span className="text-xs text-slate-400 p-2">Nenhum grupo cadastrado.</span>
                 ) : (
                    allGroupsList.map(group => (
-                    // Alteração: Removi o onClick da DIV e passei apenas para o Checkbox
                     <div 
                       key={group.id} 
                       className="flex items-center space-x-2 p-2 rounded hover:bg-white hover:shadow-sm transition-all"
@@ -236,11 +247,11 @@ export function UserRegistrationModal({ isOpen, onClose, userIdToEdit, onSuccess
                         <Checkbox 
                           id={`group-${group.id}`}
                           checked={selectedGroups.includes(group.id)} 
-                          onCheckedChange={() => toggleGroup(group.id)} // Garante a atualização correta
+                          onCheckedChange={() => toggleGroup(group.id)}
                           className="data-[state=checked]:bg-blue-600 border-slate-300 cursor-pointer"
                         />
                         <label 
-                          htmlFor={`group-${group.id}`} // Vincula label ao checkbox
+                          htmlFor={`group-${group.id}`}
                           className="text-sm font-medium leading-none cursor-pointer text-slate-700 w-full"
                         >
                           {group.name}

@@ -22,7 +22,6 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
 import { toast } from "sonner"; 
-
 import { GroupRegistrationModal } from "./GroupRegistrationModal";
 import { groupService, Group } from "@/services/groupService";
 
@@ -37,7 +36,6 @@ export function GroupsManagementView() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // O endpoint getAll já traz o nome do cliente e a contagem de usuários
       const data = await groupService.getAll({ page: 1, pagesize: 50, orderby: 'name' });
       setGroups(data.items || []);
     } catch (error) {
@@ -73,7 +71,6 @@ export function GroupsManagementView() {
     }
   };
 
-  // Filtro local (Nome do Grupo ou Nome do Cliente)
   const filteredGroups = groups.filter(group => 
     (group.name?.toLowerCase() || '').includes(filterSearch.toLowerCase()) ||
     (group.customer?.toLowerCase() || '').includes(filterSearch.toLowerCase())

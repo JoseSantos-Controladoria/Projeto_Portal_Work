@@ -5,13 +5,8 @@ import { LoginPage } from "@/app/components/LoginPage";
 import { Sidebar, SidebarView } from "@/app/components/Sidebar";
 import { Toaster } from "@/app/components/ui/sonner";
 
-// ✅ 1. Importamos o novo Dashboard do Cliente (que busca do banco)
 const ClientDashboard = lazy(() => import("@/app/components/ClientDashboard").then(m => ({ default: m.ClientDashboard })));
-
-// Mantemos o DashboardsView apenas se você quiser usar para o Admin no futuro, 
-// mas para "Meus Relatórios" usaremos o de cima.
 const DashboardsView = lazy(() => import("@/app/components/DashboardsView").then(m => ({ default: m.DashboardsView })));
-
 const ReportViewer = lazy(() => import("@/app/components/ReportViewer").then(m => ({ default: m.ReportViewer })));
 const ClientsListView = lazy(() => import("@/app/components/ClientsListView").then(m => ({ default: m.ClientsListView })));
 const WorkspacesListView = lazy(() => import("@/app/components/WorkspacesListView").then(m => ({ default: m.WorkspacesListView })));
@@ -21,7 +16,7 @@ const AccessLogsView = lazy(() => import("@/app/components/AccessLogsView").then
 
 function AppContent() {
   const { isAuthenticated, user, loading } = useAuth();
-  const { dashboards } = useData(); // Não precisamos mais filtrar dashboards aqui para a home
+  const { dashboards } = useData(); 
   
   const [activeView, setActiveView] = useState<SidebarView>('reports');
   const [selectedReport, setSelectedReport] = useState<any | null>(null);
@@ -42,8 +37,7 @@ function AppContent() {
   }
 
   if (selectedReport) {
-    // O ClientDashboard já trouxe o objeto completo do relatório (embed_url, etc.).
-    // Mantemos compatibilidade tentando usar o próprio objeto ou buscar no contexto se necessário.
+
     const dashboard = selectedReport || dashboards.find(d => d.id === selectedReport.id) || {
        id: selectedReport.id,
        title: 'Relatório Carregando...',
@@ -90,7 +84,6 @@ function AppContent() {
           }>
             {/* 1. VISUALIZAÇÃO DE RELATÓRIOS (CORRIGIDO) */}
             {activeView === 'reports' && (
-              // ✅ Agora chamamos o componente que busca no banco!
               <ClientDashboard onViewReport={(report) => setSelectedReport(report)} />
             )}
 

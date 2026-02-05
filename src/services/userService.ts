@@ -26,6 +26,24 @@ export const userService = {
     }
   },
 
+  // ✅ CORREÇÃO: Buscar usuário usando o getAll com filtro de ID
+  getById: async (id: string | number) => {
+    try {
+      // Pedimos a lista de usuários filtrando onde id = id
+      const response = await crudService.getAll<User>('user', undefined, { id: id });
+      
+      // O getAll retorna um array { items: [...] }
+      if (response.items && response.items.length > 0) {
+        return response.items[0]; // Retorna o primeiro (e único) encontrado
+      }
+      
+      throw new Error("Usuário não encontrado.");
+    } catch (error) {
+      console.error(`❌ [UserService] Erro ao buscar usuário ${id}:`, error);
+      throw error;
+    }
+  },
+
   // 2. Buscar Dados Auxiliares
   getAuxiliaryData: async () => {
     try {
@@ -46,11 +64,9 @@ export const userService = {
     }
   },
 
-  // 3. Buscar Grupos de um Usuário (CORRIGIDO)
+  // 3. Buscar Grupos de um Usuário
   getUserGroups: async (userId: string | number) => {
     try {
-      // 🔴 ANTES: /usergroup/${userId}
-      // 🟢 AGORA: /groupsbyuser/${userId} (Conforme definido no back)
       const response = await api.get(`/groupsbyuser/${userId}`);
       return response.data.groups || []; 
     } catch (error) {
@@ -81,15 +97,11 @@ export const userService = {
     // B. Salvar Grupos
     if (userId) {
       try {
-        // Se for usuário novo e não escolheu grupos, nem chama a API
         if (isNewUser && (!selectedGroupIds || selectedGroupIds.length === 0)) {
            return userId;
         }
 
-        // Se tiver grupos ou for edição, chama a API
         if (selectedGroupIds) { 
-           // 🔴 ANTES: /usergroup
-           // 🟢 AGORA: /groupsbyuser (Conforme definido no back)
            await api.post('/groupsbyuser', {
             userid: userId,
             groups: selectedGroupIds,
