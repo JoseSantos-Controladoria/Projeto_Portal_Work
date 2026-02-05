@@ -68,3 +68,15 @@ export interface Profile {
   created_at: string;
   updated_at?: string;
 }
+
+export interface GroupSummary {
+  group_id: number;
+  group_name: string;
+}
+
+export interface CustomerDashboard {
+  customer_id: number;
+  customer_name: string;
+  qty_report: number | string; // O PostgreSQL retorna count/sum como string as vezes
+  groups: GroupSummary[];
+}

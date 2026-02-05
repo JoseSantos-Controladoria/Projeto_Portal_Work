@@ -5,6 +5,7 @@ import { crudService, PaginationParams } from './crudService';
 export interface Report {
   id: number;
   workspace_id: number;
+  customer_id?: number;
   title: string;
   description: string;
   embedded_url: string;
