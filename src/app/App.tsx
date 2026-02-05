@@ -2,17 +2,18 @@ import { useState, lazy, Suspense } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { DataProvider, useData } from "@/contexts/DataContext";
 import { LoginPage } from "@/app/components/LoginPage";
-import { Sidebar, SidebarView } from "@/app/components/Sidebar";
+import { Sidebar, SidebarView } from "@/app/components/Sidebar"; // Certifique-se que SidebarView aceita 'profile'
 import { Toaster } from "@/app/components/ui/sonner";
 
+// Lazy loading dos componentes
 const ClientDashboard = lazy(() => import("@/app/components/ClientDashboard").then(m => ({ default: m.ClientDashboard })));
-const DashboardsView = lazy(() => import("@/app/components/DashboardsView").then(m => ({ default: m.DashboardsView })));
 const ReportViewer = lazy(() => import("@/app/components/ReportViewer").then(m => ({ default: m.ReportViewer })));
 const ClientsListView = lazy(() => import("@/app/components/ClientsListView").then(m => ({ default: m.ClientsListView })));
 const WorkspacesListView = lazy(() => import("@/app/components/WorkspacesListView").then(m => ({ default: m.WorkspacesListView })));
 const UsersManagementView = lazy(() => import("@/app/components/UsersManagementView").then(m => ({ default: m.UsersManagementView }))); 
 const ReportsManagementView = lazy(() => import("@/app/components/ReportsManagementView"));
 const AccessLogsView = lazy(() => import("@/app/components/AccessLogsView").then(m => ({ default: m.AccessLogsView })));
+const UserProfileView = lazy(() => import("@/app/components/UserProfileView").then(m => ({ default: m.UserProfileView }))); // NOVO
 
 function AppContent() {
   const { isAuthenticated, user, loading } = useAuth();
@@ -37,7 +38,6 @@ function AppContent() {
   }
 
   if (selectedReport) {
-
     const dashboard = selectedReport || dashboards.find(d => d.id === selectedReport.id) || {
        id: selectedReport.id,
        title: 'Relatório Carregando...',
@@ -72,6 +72,7 @@ function AppContent() {
              activeView === 'workspaces' ? 'Gestão de Workspaces' :
              activeView === 'logs' ? 'Logs de Auditoria e Segurança' :
              activeView === 'users' ? 'Gerenciamento de Usuários' :
+             activeView === 'profile' ? 'Meu Perfil' : // NOVO TÍTULO
              'Painel'}
           </h1>
         </header>
@@ -82,28 +83,13 @@ function AppContent() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
           }>
-            {/* 1. VISUALIZAÇÃO DE RELATÓRIOS (CORRIGIDO) */}
-            {activeView === 'reports' && (
-              <ClientDashboard onViewReport={(report) => setSelectedReport(report)} />
-            )}
-
-            {/* 2. GESTÃO DE RELATÓRIOS (ADMIN) */}
-            {activeView === 'register_report' && (
-              <ReportsManagementView />
-            )}
-
-            {/* 3. WORKSPACES */}
+            {activeView === 'reports' && <ClientDashboard onViewReport={(report) => setSelectedReport(report)} />}
+            {activeView === 'register_report' && <ReportsManagementView />}
             {activeView === 'workspaces' && <WorkspacesListView />}
-
-            {/* 4. CLIENTES E GRUPOS */}
             {activeView === 'clients' && <ClientsListView />}
-            
-            {/* 5. GESTÃO DE USUÁRIOS */}
             {activeView === 'users' && <UsersManagementView />} 
-
-            {/* 6. LOGS DE ACESSO */}
             {activeView === 'logs' && <AccessLogsView />}
-
+            {activeView === 'profile' && <UserProfileView />} {/* NOVA RENDERIZAÇÃO */}
           </Suspense>
         </div>
       </main>

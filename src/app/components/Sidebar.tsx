@@ -8,11 +8,13 @@ import {
   ScrollText,
   Briefcase,
   FilePlus,
-  ShieldCheck
+  ShieldCheck,
+  UserCog
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-export type SidebarView = 'reports' | 'register_report' | 'workspaces' | 'clients' | 'users' | 'logs';
+// 1. ADICIONADO 'profile' AO TIPO
+export type SidebarView = 'reports' | 'register_report' | 'workspaces' | 'clients' | 'users' | 'logs' | 'profile';
 
 interface SidebarProps {
   activeView: string;
@@ -20,7 +22,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ activeView, onViewChange }: SidebarProps) {
-  const { logout, user } = useAuth(); // Pegamos o user aqui
+  const { logout, user } = useAuth();
 
   const handleNavigation = (view: SidebarView) => {
     onViewChange(view);
@@ -98,21 +100,35 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
 
       {/* Footer / User Profile */}
       <div className="p-4 border-t border-slate-800 bg-slate-950/30">
-        <div className="flex items-center gap-3 mb-4 px-2">
+        
+        {/* 2. ÁREA DE PERFIL CLICÁVEL */}
+        <div 
+           className={cn(
+             "flex items-center gap-3 mb-4 px-2 py-2 rounded-lg cursor-pointer transition-colors group",
+             activeView === 'profile' ? "bg-slate-800" : "hover:bg-slate-800/50"
+           )}
+           onClick={() => handleNavigation('profile')}
+           title="Acessar meu perfil"
+        >
           <div className={cn(
-            "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border",
+            "w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold border transition-all",
             isAdmin 
-              ? "bg-blue-900/50 border-blue-700/30 text-blue-400" 
-              : "bg-emerald-900/50 border-emerald-700/30 text-emerald-400"
+              ? "bg-blue-900/50 border-blue-700/30 text-blue-400 group-hover:border-blue-500" 
+              : "bg-emerald-900/50 border-emerald-700/30 text-emerald-400 group-hover:border-emerald-500"
           )}>
             {user?.name?.charAt(0).toUpperCase() || 'U'}
           </div>
+          
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate">
+            <p className={cn(
+               "text-sm font-medium truncate group-hover:text-white transition-colors",
+               activeView === 'profile' ? "text-white" : "text-slate-300"
+            )}>
               {user?.name || 'Usuário'}
             </p>
-            <p className="text-xs text-slate-500 truncate capitalize">
-              {user?.role === 'admin' ? 'Administrador' : user?.company_id?.toUpperCase()}
+            <p className="text-xs text-slate-500 truncate capitalize flex items-center gap-1">
+               {user?.role === 'admin' ? 'Administrador' : user?.company_id?.toUpperCase()}
+               <UserCog className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
             </p>
           </div>
         </div>

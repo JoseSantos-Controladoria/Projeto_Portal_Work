@@ -1,11 +1,5 @@
 import { useEffect } from "react";
-import { 
-  ArrowLeft, 
-  Maximize2, 
-  MoreHorizontal, 
-  RefreshCw, 
-  ExternalLink 
-} from "lucide-react";
+import { ArrowLeft, Maximize2 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Dashboard } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,7 +16,6 @@ export function ReportViewer({ dashboard, onBack }: ReportViewerProps) {
 
   useEffect(() => {
     if (user?.id && dashboard?.id) {
-
        logService.logAction(user.id, 'OPEN REPORT', Number(dashboard.id));
     }
   }, [dashboard?.id, user?.id]);
@@ -35,62 +28,39 @@ export function ReportViewer({ dashboard, onBack }: ReportViewerProps) {
     <div className="flex flex-col h-full bg-slate-50">
       
       {/* Header do Relatório */}
-      <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-20">
+      <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-20 shadow-sm">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-slate-100">
-            <ArrowLeft className="w-5 h-5 text-slate-600" />
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onBack} 
+            className="hover:bg-slate-100 -ml-2 text-slate-500 hover:text-slate-900 transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6" />
           </Button>
-          <div>
-            <h2 className="text-lg font-bold text-slate-900 leading-tight">
+          
+          <div className="flex flex-col">
+            <h2 className="text-xl font-bold text-slate-800 leading-none">
               {dashboard.title}
             </h2>
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <span>Atualizado {dashboard.last_update || "Recentemente"}</span>
-              <span className="w-1 h-1 rounded-full bg-slate-300" />
-              <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-medium border border-blue-100">
-                {dashboard.type || "Relatório"}
-              </span>
-            </div>
+            <span className="text-xs text-slate-500 mt-1 font-medium">
+               {dashboard.workspace_name || "Workspace Padrão"} • {dashboard.type || "Relatório Power BI"}
+            </span>
           </div>
         </div>
-
-        <div className="flex items-center gap-2">
-          {reportUrl && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="hidden md:flex gap-2 text-slate-600"
-              onClick={() => window.open(reportUrl, '_blank')}
-            >
-              <ExternalLink className="w-4 h-4" />
-              Abrir Nova Aba
-            </Button>
-          )}
-          
-          <div className="h-6 w-px bg-slate-200 mx-1 hidden md:block" />
-          
-          <Button variant="ghost" size="icon" title="Atualizar" onClick={() => window.location.reload()}>
-            <RefreshCw className="w-4 h-4 text-slate-500" />
-          </Button>
-          <Button variant="ghost" size="icon" title="Tela Cheia">
-            <Maximize2 className="w-4 h-4 text-slate-500" />
-          </Button>
-          <Button variant="ghost" size="icon">
-            <MoreHorizontal className="w-4 h-4 text-slate-500" />
-          </Button>
-        </div>
+        <div></div>
       </div>
 
-      {/* Área do Conteúdo (Iframe) */}
-      <div className="flex-1 p-6 overflow-hidden flex flex-col items-center justify-center relative">
+      {/* Área do Conteúdo (Iframe Ampliado) */}
+      <div className="flex-1 p-2 md:p-4 overflow-hidden flex flex-col items-center justify-center relative bg-slate-100">
         
         {/* Iframe do PowerBI */}
         {reportUrl ? (
-          <div className="w-full h-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative flex-1 min-h-[600px]">
+          <div className="w-full h-[85vh] bg-white rounded-lg shadow-md border border-slate-200 overflow-hidden relative">
             <iframe 
               title={dashboard.title}
               src={reportUrl} 
-              className="w-full h-full border-0 min-h-[600px]"
+              className="w-full h-full border-0"
               allowFullScreen={true}
             />
           </div>

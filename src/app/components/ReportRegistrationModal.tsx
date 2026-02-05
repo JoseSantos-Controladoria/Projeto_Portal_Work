@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { 
-  FileBarChart, Layout, Link as LinkIcon, Loader2, Users, Shield 
+  FileBarChart, Layout, Link as LinkIcon, Loader2, Users, Shield, CheckCircle2, Building2, X
 } from "lucide-react"; 
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -16,7 +16,9 @@ import { Checkbox } from "@/app/components/ui/checkbox";
 import { ScrollArea } from "@/app/components/ui/scroll-area"; 
 import { reportService } from "@/services/reportService";
 import { groupService } from "@/services/groupService"; 
+import { crudService } from "@/services/crudService";
 import { toast } from "sonner";
+import { Badge } from "@/app/components/ui/badge"; // Supondo que exista, ou usamos div estilizada
 
 interface ReportModalProps {
   isOpen: boolean;
@@ -31,9 +33,14 @@ export function ReportRegistrationModal({
 }: ReportModalProps) {
   
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Dados auxiliares
   const [workspacesList, setWorkspacesList] = useState<any[]>([]);
+  const [customersList, setCustomersList] = useState<any[]>([]); 
+  const [allGroups, setAllGroups] = useState<any[]>([]); 
 
-  const [allGroups, setAllGroups] = useState<any[]>([]);
+  // Controle de Seleção
+  const [selectedCustomerIds, setSelectedCustomerIds] = useState<number[]>([]);
   const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>([]);
 
   const [formData, setFormData] = useState({
@@ -50,17 +57,36 @@ export function ReportRegistrationModal({
     }
   }, [isOpen, reportIdToEdit]);
 
+  // Se o usuário desmarcar um cliente, removemos os grupos dele da seleção
+  useEffect(() => {
+    const groupsToKeep = selectedGroupIds.filter(gId => {
+      const group = allGroups.find(g => g.id === gId);
+      // Se o grupo pertence a um cliente que ainda está selecionado, mantém
+      return group && selectedCustomerIds.includes(group.customer_id);
+    });
+    
+    // Se houve mudança (remoção de grupos de clientes desmarcados), atualiza
+    if (groupsToKeep.length !== selectedGroupIds.length) {
+      setSelectedGroupIds(groupsToKeep);
+    }
+  }, [selectedCustomerIds, allGroups]);
+
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const auxData = await reportService.getAuxiliaryData();
-      if (auxData?.workspaces) {
-        setWorkspacesList(auxData.workspaces);
-      }
+      // 1. Carregar Workspaces, Clientes e Grupos
+      const auxDataReport = await reportService.getAuxiliaryData();
+      if (auxDataReport?.workspaces) setWorkspacesList(auxDataReport.workspaces);
 
+      const customersData = await crudService.getAll('customer', { pagesize: 100, orderby: 'name' });
+      setCustomersList(customersData.items || []);
+
+      const groupsData = await groupService.getAll({ pagesize: 1000 });
+      setAllGroups(groupsData.items || []);
+
+      // 2. Se for edição, popular os campos
       if (reportIdToEdit) {
         const report = await reportService.getById(reportIdToEdit);
-        
         setFormData({
           title: report.title || "",
           description: report.description || "",
@@ -69,16 +95,15 @@ export function ReportRegistrationModal({
           active: report.active !== false 
         });
 
-        await loadGroupsForEdit(reportIdToEdit);
-
+        // Carregar permissões existentes
+        await loadPermissionsForEdit(reportIdToEdit, groupsData.items || []);
       } else {
-
+        // Reset para novo cadastro
         setFormData({ 
-          title: "", description: "", workspace_id: "", 
-          embedded_url: "", active: true 
+          title: "", description: "", workspace_id: "", embedded_url: "", active: true 
         });
+        setSelectedCustomerIds([]);
         setSelectedGroupIds([]);
-        await loadAllGroups();
       }
 
     } catch (error) {
@@ -89,30 +114,48 @@ export function ReportRegistrationModal({
     }
   };
 
-  const loadAllGroups = async () => {
+  const loadPermissionsForEdit = async (reportId: number, allGroupsList: any[]) => {
     try {
-      const response = await groupService.getAll({ pagesize: 100 }); 
-      setAllGroups(response.items || []);
-    } catch (error) {
-      console.error("Erro ao listar grupos:", error);
-    }
-  };
-
-  const loadGroupsForEdit = async (id: number) => {
-    try {
-      const groupsFromApi = await reportService.getReportGroups(id);
+      const groupsFromApi = await reportService.getReportGroups(reportId);
       
-      setAllGroups(groupsFromApi);
-
-      const associatedIds = groupsFromApi
+      // IDs dos grupos que já têm acesso
+      const associatedGroupIds = groupsFromApi
         .filter((g: any) => g.group_associated === true)
         .map((g: any) => g.group_id);
       
-      setSelectedGroupIds(associatedIds);
+      setSelectedGroupIds(associatedGroupIds);
+
+      // Identificar quais clientes possuem esses grupos para pré-selecionar no filtro
+      const customersWithAccess = new Set<number>();
+      allGroupsList.forEach(group => {
+        if (associatedGroupIds.includes(group.id) && group.customer_id) {
+          customersWithAccess.add(group.customer_id);
+        }
+      });
+      setSelectedCustomerIds(Array.from(customersWithAccess));
 
     } catch (error) {
       console.error("Erro ao carregar permissões:", error);
     }
+  };
+
+  // --- Lógica de Seleção ---
+
+  const handleCustomerSelect = (customerIdStr: string) => {
+    const customerId = Number(customerIdStr);
+    if (!selectedCustomerIds.includes(customerId)) {
+      // Adiciona o cliente
+      setSelectedCustomerIds(prev => [...prev, customerId]);
+      
+      // Opcional: Auto-selecionar todos os grupos deste cliente ao adicioná-lo
+      const customerGroups = allGroups.filter(g => g.customer_id === customerId).map(g => g.id);
+      setSelectedGroupIds(prev => [...new Set([...prev, ...customerGroups])]);
+    }
+  };
+
+  const removeCustomer = (customerId: number) => {
+    setSelectedCustomerIds(prev => prev.filter(id => id !== customerId));
+    // A limpeza dos grupos acontece no useEffect
   };
 
   const toggleGroupSelection = (groupId: number) => {
@@ -123,9 +166,12 @@ export function ReportRegistrationModal({
     );
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  // Grupos filtrados pelos clientes selecionados
+  const filteredGroups = allGroups.filter(group => 
+    selectedCustomerIds.includes(group.customer_id)
+  );
+
+  const handleSubmit = async () => {
     if (!formData.title.trim()) {
       toast.warning("Por favor, digite um título para o relatório.");
       return;
@@ -139,28 +185,20 @@ export function ReportRegistrationModal({
     try {
       let savedReportId = reportIdToEdit;
 
+      // 1. Salvar Relatório
+      const payload = { ...formData, workspace_id: Number(formData.workspace_id) };
+      
       if (reportIdToEdit) {
-        await reportService.save({
-          id: reportIdToEdit,
-          ...formData,
-          workspace_id: Number(formData.workspace_id)
-        });
+        await reportService.save({ id: reportIdToEdit, ...payload });
       } else {
-        const res: any = await reportService.save({
-          ...formData,
-          workspace_id: Number(formData.workspace_id)
-        });
-        
-        if (res && res.id) {
-          savedReportId = res.id;
-        }
+        const res: any = await reportService.save(payload);
+        if (res && res.id) savedReportId = res.id;
       }
 
+      // 2. Salvar Permissões (IDs dos Grupos Selecionados)
       if (savedReportId) {
         await reportService.saveGroups(savedReportId, selectedGroupIds);
-        toast.success("Relatório e permissões salvos com sucesso!");
-      } else {
-        toast.warning("Relatório salvo, mas não foi possível vincular os grupos.");
+        toast.success("Relatório salvo com sucesso!");
       }
 
       if (onSuccess) onSuccess();
@@ -176,42 +214,46 @@ export function ReportRegistrationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      <DialogContent className="sm:max-w-6xl bg-white p-0 overflow-hidden flex flex-col h-[700px]">
+        
+        <DialogHeader className="px-6 py-4 border-b shrink-0 bg-white z-10">
+          <DialogTitle className="flex items-center gap-2 text-xl">
             <FileBarChart className="w-5 h-5 text-blue-600" />
             {reportIdToEdit ? "Editar Relatório" : "Novo Relatório"}
           </DialogTitle>
           <DialogDescription>
-            Configure os dados do relatório e defina quem pode acessá-lo.
+            Defina os dados do relatório e filtre por clientes para atribuir permissões aos grupos.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 py-4">
+        {/* LAYOUT GRID: ESQUERDA (FORM) | DIREITA (PERMISSÕES) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 h-full min-h-0">
           
-          {/* Seção 1: Dados Gerais */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-              <Layout className="w-4 h-4" /> Dados do Dashboard
+          {/* COLUNA 1: DADOS GERAIS (4 colunas) */}
+          <div className="lg:col-span-4 p-5 border-r border-slate-100 bg-slate-50/30 flex flex-col gap-4 overflow-y-auto">
+            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 uppercase tracking-wide shrink-0">
+              <Layout className="w-4 h-4 text-blue-500" /> Dados do Dashboard
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Título</Label>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="title" className="text-slate-700">Título <span className="text-red-500">*</span></Label>
                 <Input 
                   id="title" 
                   placeholder="Ex: DRE Consolidado" 
                   value={formData.title}
                   onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  className="bg-white"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Workspace</Label>
+
+              <div className="space-y-1.5">
+                <Label className="text-slate-700">Workspace <span className="text-red-500">*</span></Label>
                 <Select 
                   value={formData.workspace_id} 
                   onValueChange={(val) => setFormData({...formData, workspace_id: val})}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-white">
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -223,105 +265,172 @@ export function ReportRegistrationModal({
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="desc">Descrição</Label>
-              <Input 
-                id="desc" 
-                placeholder="Breve resumo..." 
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Link Embed (Power BI)</Label>
-              <Input 
-                placeholder="https://app.powerbi.com/reportEmbed?..." 
-                value={formData.embedded_url}
-                onChange={(e) => setFormData({...formData, embedded_url: e.target.value})}
-              />
-            </div>
-
-             <div className="flex items-center justify-between bg-slate-50 p-3 rounded-lg border">
-              <div className="flex flex-col">
-                <span className="text-sm font-medium">Status Ativo</span>
-                <span className="text-xs text-slate-500">Define se o relatório aparece no sistema.</span>
+              <div className="space-y-1.5">
+                <Label htmlFor="desc" className="text-slate-700">Descrição</Label>
+                <Input 
+                  id="desc" 
+                  placeholder="Resumo do conteúdo..." 
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  className="bg-white"
+                />
               </div>
-              <Switch 
-                checked={formData.active}
-                onCheckedChange={(checked) => setFormData({...formData, active: checked})}
-              />
-            </div>
-          </div>
 
-          <div className="border-t border-slate-100 my-4" />
+              <div className="space-y-1.5">
+                <Label className="text-slate-700 flex items-center gap-2">
+                  <LinkIcon className="w-3 h-3" /> Link Embed
+                </Label>
+                <Input 
+                  placeholder="https://app.powerbi.com/..." 
+                  value={formData.embedded_url}
+                  onChange={(e) => setFormData({...formData, embedded_url: e.target.value})}
+                  className="bg-white font-mono text-xs text-slate-600"
+                />
+              </div>
 
-          {/* Seção 2: Permissões (Grupos) */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-              <Shield className="w-4 h-4" /> Permissões de Acesso
-            </h3>
-            <p className="text-xs text-slate-500">
-              Selecione os Grupos de Usuários que poderão visualizar este relatório.
-            </p>
-
-            <div className="border rounded-md p-4 bg-slate-50/50">
-              {allGroups.length === 0 ? (
-                <div className="text-center py-4 text-slate-500 text-sm">
-                  Nenhum grupo encontrado. Cadastre grupos primeiro.
+              <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-slate-200 mt-2">
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-slate-700">Ativo?</span>
+                  <span className="text-xs text-slate-500">Disponível no menu</span>
                 </div>
-              ) : (
-                <ScrollArea className="h-[200px] pr-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {allGroups.map((group) => {
-                       const gId = group.id || group.group_id;
-                       const gName = group.name || group.group_name;
-                       const cName = group.customer?.name || group.customer_name || "Cliente n/d";
-                       
-                       const isSelected = selectedGroupIds.includes(gId);
-
-                       return (
-                        <div 
-                          key={gId} 
-                          className={`flex items-start space-x-3 p-2 rounded-md transition-colors border ${
-                            isSelected ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-200 hover:border-blue-300'
-                          }`}
-                        >
-                          <Checkbox 
-                            id={`grp-${gId}`} 
-                            checked={isSelected}
-                            onCheckedChange={() => toggleGroupSelection(gId)}
-                          />
-                          <div className="grid gap-1.5 leading-none">
-                            <label
-                              htmlFor={`grp-${gId}`}
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                            >
-                              {gName}
-                            </label>
-                            <p className="text-xs text-muted-foreground">
-                              {cName}
-                            </p>
-                          </div>
-                        </div>
-                       );
-                    })}
-                  </div>
-                </ScrollArea>
-              )}
+                <Switch 
+                  checked={formData.active}
+                  onCheckedChange={(checked) => setFormData({...formData, active: checked})}
+                />
+              </div>
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
-              {isLoading ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : null}
-              Salvar Relatório
-            </Button>
-          </DialogFooter>
-        </form>
+          {/* COLUNA 2: PERMISSÕES (8 colunas) */}
+          <div className="lg:col-span-8 p-5 flex flex-col h-full min-h-0 bg-white">
+            
+            {/* -- PARTE SUPERIOR: SELETOR DE CLIENTES -- */}
+            <div className="mb-4 space-y-3 p-4 bg-slate-50 border border-slate-100 rounded-lg">
+               <div className="flex items-center justify-between">
+                 <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 uppercase tracking-wide">
+                  <Building2 className="w-4 h-4 text-emerald-600" /> 1. Selecione os Clientes
+                </h3>
+                <span className="text-xs text-slate-400">Ao selecionar, os grupos serão carregados abaixo.</span>
+               </div>
+               
+               <Select onValueChange={handleCustomerSelect}>
+                  <SelectTrigger className="bg-white border-slate-200">
+                    <SelectValue placeholder="Adicionar cliente à lista de permissões..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customersList.map(cust => (
+                      <SelectItem key={cust.id} value={String(cust.id)} disabled={selectedCustomerIds.includes(cust.id)}>
+                        {cust.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Lista de Chips dos Clientes Selecionados */}
+                <div className="flex flex-wrap gap-2 min-h-[30px]">
+                  {selectedCustomerIds.length === 0 && (
+                    <span className="text-xs text-slate-400 italic py-1">Nenhum cliente selecionado ainda.</span>
+                  )}
+                  {selectedCustomerIds.map(custId => {
+                    const cust = customersList.find(c => c.id === custId);
+                    return (
+                      <div key={custId} className="flex items-center gap-1 bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full border border-emerald-200">
+                        <span className="font-medium">{cust?.name}</span>
+                        <button onClick={() => removeCustomer(custId)} className="hover:text-emerald-950">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+            </div>
+
+            {/* -- PARTE INFERIOR: LISTA DE GRUPOS -- */}
+            <div className="flex-1 flex flex-col min-h-0">
+               <div className="flex items-center justify-between mb-2 px-1">
+                 <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 uppercase tracking-wide">
+                  <Shield className="w-4 h-4 text-blue-600" /> 2. Confirme os Grupos Vinculados
+                </h3>
+                <span className="text-xs font-medium bg-blue-50 text-blue-700 px-2 py-1 rounded-full border border-blue-100">
+                  {selectedGroupIds.length} grupos com acesso
+                </span>
+               </div>
+
+               <div className="flex-1 border rounded-lg bg-slate-50/50 relative overflow-hidden">
+                {selectedCustomerIds.length === 0 ? (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 gap-2">
+                    <Building2 className="w-10 h-10 opacity-10" />
+                    <p className="text-sm font-medium">Selecione um cliente acima para ver seus grupos.</p>
+                  </div>
+                ) : filteredGroups.length === 0 ? (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 gap-2">
+                    <Users className="w-10 h-10 opacity-10" />
+                    <p className="text-sm">Os clientes selecionados não possuem grupos cadastrados.</p>
+                  </div>
+                ) : (
+                  <ScrollArea className="h-full w-full">
+                    <div className="p-2 space-y-1">
+                      {/* Agrupar visualmente por Cliente */}
+                      {selectedCustomerIds.map(custId => {
+                        const cust = customersList.find(c => c.id === custId);
+                        const groupsOfCust = filteredGroups.filter(g => g.customer_id === custId);
+                        
+                        if (groupsOfCust.length === 0) return null;
+
+                        return (
+                          <div key={custId} className="mb-4 last:mb-0">
+                            <div className="px-2 py-1 text-xs font-bold text-slate-500 uppercase bg-slate-100/50 rounded mb-1">
+                              {cust?.name}
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {groupsOfCust.map(group => {
+                                const isSelected = selectedGroupIds.includes(group.id);
+                                return (
+                                  <div 
+                                    key={group.id} 
+                                    onClick={() => toggleGroupSelection(group.id)}
+                                    className={`flex items-center space-x-3 p-2.5 rounded-md transition-all border cursor-pointer select-none ${
+                                      isSelected 
+                                        ? 'bg-white border-blue-300 shadow-sm ring-1 ring-blue-100' 
+                                        : 'bg-white/50 border-slate-200 hover:bg-white hover:border-slate-300'
+                                    }`}
+                                  >
+                                    <Checkbox 
+                                      checked={isSelected}
+                                      className="data-[state=checked]:bg-blue-600 border-slate-300 pointer-events-none"
+                                    />
+                                    <span className={`text-sm font-medium ${isSelected ? 'text-blue-900' : 'text-slate-600'}`}>
+                                      {group.name}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter className="px-6 py-4 border-t bg-slate-50/50 shrink-0">
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>Cancelar</Button>
+          <Button 
+            className="bg-blue-600 hover:bg-blue-700 min-w-[140px]" 
+            onClick={handleSubmit} 
+            disabled={isLoading}
+          >
+            {isLoading ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : (
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+            )}
+            Salvar Relatório
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

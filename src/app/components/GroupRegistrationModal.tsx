@@ -5,7 +5,8 @@ import {
   Search,
   UserPlus,
   CheckCircle2,
-  Loader2
+  Loader2,
+  Lock
 } from "lucide-react"; 
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -33,16 +34,17 @@ import { toast } from "sonner";
 
 interface GroupRegistrationModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void; // CORREÇÃO: Usamos o padrão do Shadcn
   groupIdToEdit?: number | null; 
   onSuccess?: () => void;
 }
 
-export function GroupRegistrationModal({ isOpen, onClose, groupIdToEdit, onSuccess }: GroupRegistrationModalProps) {
+export function GroupRegistrationModal({ isOpen, onOpenChange, groupIdToEdit, onSuccess }: GroupRegistrationModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [customersList, setCustomersList] = useState<any[]>([]);
   const [usersList, setUsersList] = useState<any[]>([]);
+  
   const [formData, setFormData] = useState({
     name: "",
     customer_id: "", 
@@ -94,9 +96,29 @@ export function GroupRegistrationModal({ isOpen, onClose, groupIdToEdit, onSucce
     }
   };
 
+  // Lógica: Atualizar nome ao selecionar cliente
+  const handleCustomerChange = (customerId: string) => {
+    const selectedCustomer = customersList.find(c => String(c.id) === customerId);
+    let newName = formData.name;
+
+    // Se estiver criando um novo, aplica o prefixo
+    if (!groupIdToEdit && selectedCustomer) {
+        const prefix = `${selectedCustomer.name.toUpperCase()} - `;
+        if (!newName.startsWith(prefix)) {
+            newName = prefix;
+        }
+    }
+
+    setFormData({
+        ...formData,
+        customer_id: customerId,
+        name: newName
+    });
+  };
+
   const handleSubmit = async () => {
     if (!formData.name || !formData.customer_id) {
-      toast.warning("Preencha o nome e selecione um cliente.");
+      toast.warning("Selecione um cliente e preencha o nome do grupo.");
       return;
     }
 
@@ -111,7 +133,10 @@ export function GroupRegistrationModal({ isOpen, onClose, groupIdToEdit, onSucce
 
       toast.success(groupIdToEdit ? "Grupo atualizado!" : "Grupo criado com sucesso!");
       if (onSuccess) onSuccess();
-      onClose();
+      
+      // CORREÇÃO: Chama a função correta para fechar
+      onOpenChange(false); 
+      
     } catch (error) {
       console.error(error);
       toast.error("Erro ao salvar grupo.");
@@ -131,8 +156,11 @@ export function GroupRegistrationModal({ isOpen, onClose, groupIdToEdit, onSucce
     (user.email?.toLowerCase() || '').includes(userSearch.toLowerCase())
   );
 
+  const isNameDisabled = !formData.customer_id && !groupIdToEdit;
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    // CORREÇÃO: Passamos onOpenChange diretamente para o Dialog
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[900px] bg-white overflow-hidden max-h-[90vh] flex flex-col">
         <DialogHeader className="px-2">
           <DialogTitle className="text-xl">
@@ -149,7 +177,6 @@ export function GroupRegistrationModal({ isOpen, onClose, groupIdToEdit, onSucce
             <span className="text-slate-500">Carregando dados...</span>
           </div>
         ) : (
-          /* LAYOUT DE 2 COLUNAS */
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4 px-2 overflow-y-auto">
             
             {/* COLUNA ESQUERDA - DADOS DO GRUPO */}
@@ -161,27 +188,18 @@ export function GroupRegistrationModal({ isOpen, onClose, groupIdToEdit, onSucce
                 </h3>
                 
                 <div className="space-y-4">
+                  
+                  {/* 1. SELEÇÃO DE CLIENTE */}
                   <div className="grid gap-2">
-                    <Label htmlFor="name" className="text-slate-700">Nome do Grupo</Label>
-                    <Input 
-                      id="name" 
-                      className="bg-white"
-                      placeholder="Ex: Comercial - Liderança" 
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label className="text-slate-700">Cliente Vinculado</Label>
+                    <Label className="text-slate-700">Cliente Vinculado <span className="text-red-500">*</span></Label>
                     <Select 
                       value={formData.customer_id} 
-                      onValueChange={(val) => setFormData({...formData, customer_id: val})}
+                      onValueChange={handleCustomerChange}
                     >
                       <SelectTrigger className="bg-white">
                         <div className="flex items-center gap-2 text-slate-600">
                           <Building2 className="w-4 h-4 text-slate-400" />
-                          <SelectValue placeholder="Selecione..." />
+                          <SelectValue placeholder="Selecione o cliente..." />
                         </div>
                       </SelectTrigger>
                       <SelectContent>
@@ -192,6 +210,29 @@ export function GroupRegistrationModal({ isOpen, onClose, groupIdToEdit, onSucce
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {/* 2. NOME DO GRUPO */}
+                  <div className="grid gap-2 relative">
+                    <Label htmlFor="name" className="text-slate-700">Nome do Grupo <span className="text-red-500">*</span></Label>
+                    <div className="relative">
+                        <Input 
+                        id="name" 
+                        className={`bg-white transition-all ${isNameDisabled ? 'opacity-50 cursor-not-allowed bg-slate-100' : ''}`}
+                        placeholder={isNameDisabled ? "Selecione um cliente primeiro" : "Ex: HALEON - Gerência"} 
+                        value={formData.name}
+                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        disabled={isNameDisabled}
+                        />
+                        {isNameDisabled && (
+                            <Lock className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                        )}
+                    </div>
+                    {isNameDisabled && (
+                        <p className="text-xs text-amber-600 font-medium">
+                            ⚠ Selecione o cliente para liberar este campo.
+                        </p>
+                    )}
                   </div>
 
                   {/* STATUS */}
@@ -231,29 +272,26 @@ export function GroupRegistrationModal({ isOpen, onClose, groupIdToEdit, onSucce
                 />
               </div>
 
-              {/* Lista de Usuários */}
               <div className="border rounded-xl h-[350px] overflow-y-auto p-2 space-y-1 bg-white shadow-sm">
                 {filteredUsers.length > 0 ? (
                   filteredUsers.map(user => (
                     <div 
                       key={user.id} 
-                      className={`flex items-center gap-3 p-3 rounded-lg transition-all border group ${
+                      className={`flex items-center gap-3 p-3 rounded-lg transition-all border group cursor-pointer select-none ${
                         selectedUsers.includes(user.id) 
                           ? 'bg-blue-50/80 border-blue-200' 
                           : 'border-transparent hover:bg-slate-50'
                       }`}
+                      onClick={() => toggleUser(user.id)}
                     >
                       <Checkbox 
                         id={`user-${user.id}`}
                         checked={selectedUsers.includes(user.id)}
                         onCheckedChange={() => toggleUser(user.id)}
-                        className="data-[state=checked]:bg-blue-600 border-slate-300"
+                        className="data-[state=checked]:bg-blue-600 border-slate-300 pointer-events-none"
                       />
                       
-                      <label 
-                        htmlFor={`user-${user.id}`}
-                        className="flex items-center gap-3 flex-1 cursor-pointer"
-                      >
+                      <div className="flex items-center gap-3 flex-1">
                         <Avatar className="w-9 h-9 border-2 border-white shadow-sm">
                           <AvatarFallback className="text-xs bg-slate-200 text-slate-600 font-bold">
                             {user.name ? user.name.charAt(0).toUpperCase() : '?'}
@@ -265,7 +303,7 @@ export function GroupRegistrationModal({ isOpen, onClose, groupIdToEdit, onSucce
                           </span>
                           <span className="text-xs text-slate-500 group-hover:text-slate-600">{user.email}</span>
                         </div>
-                      </label>
+                      </div>
                     </div>
                   ))
                 ) : (
@@ -280,11 +318,11 @@ export function GroupRegistrationModal({ isOpen, onClose, groupIdToEdit, onSucce
         )}
 
         <DialogFooter className="px-2 mt-auto pt-4 border-t">
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>Cancelar</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>Cancelar</Button>
           <Button 
             className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px]" 
             onClick={handleSubmit}
-            disabled={isLoading || isLoadingData}
+            disabled={isLoading || isLoadingData || isNameDisabled}
           >
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
               <>

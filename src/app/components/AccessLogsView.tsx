@@ -12,6 +12,14 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/app/components/ui/select";
 import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/app/components/ui/pagination";
 import { logService, LogEntry } from "@/services/logService";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -23,14 +31,24 @@ export function AccessLogsView() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterAction, setFilterAction] = useState("all");
 
+  // Estados de Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
   // Carregar dados reais ao montar
   useEffect(() => {
     loadLogs();
   }, []);
 
+  // Reseta paginação ao filtrar
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterAction]);
+
   const loadLogs = async () => {
     setIsLoading(true);
-    const data = await logService.getAll();
+    // Busca 1000 logs ordenados por data decrescente (mais recentes primeiro)
+    const data = await logService.getAll({ page: 1, pagesize: 1000, orderby: 'created_at desc' });
     setLogs(data);
     setIsLoading(false);
   };
@@ -38,14 +56,20 @@ export function AccessLogsView() {
   const filteredLogs = logs.filter(log => {
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = 
-      log.user_name?.toLowerCase().includes(searchLower) ||
-      log.report_name?.toLowerCase().includes(searchLower) ||
-      log.group_name?.toLowerCase().includes(searchLower);
+      (log.user_name?.toLowerCase() || '').includes(searchLower) ||
+      (log.report_name?.toLowerCase() || '').includes(searchLower) ||
+      (log.group_name?.toLowerCase() || '').includes(searchLower);
       
     const matchesAction = filterAction === "all" || log.action === filterAction;
 
     return matchesSearch && matchesAction;
   });
+
+  // Lógica de Paginação
+  const totalPages = Math.ceil(filteredLogs.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentLogs = filteredLogs.slice(startIndex, endIndex);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -116,8 +140,8 @@ export function AccessLogsView() {
                     </div>
                  </TableCell>
                </TableRow>
-            ) : filteredLogs.length > 0 ? (
-              filteredLogs.map((log) => (
+            ) : currentLogs.length > 0 ? (
+              currentLogs.map((log) => (
                 <TableRow key={log.id} className="hover:bg-slate-50/50">
                   
                   {/* Data/Hora */}
@@ -133,12 +157,12 @@ export function AccessLogsView() {
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8 border border-slate-100">
                         <AvatarFallback className="bg-blue-100 text-blue-700 text-xs font-bold">
-                          {log.user_name?.charAt(0).toUpperCase()}
+                          {(log.user_name || '?').charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-slate-700">{log.user_name}</span>
-                        <span className="text-xs text-slate-500">{log.user_email}</span>
+                        <span className="text-sm font-medium text-slate-700">{log.user_name || 'Desconhecido'}</span>
+                        <span className="text-xs text-slate-500">{log.user_email || '-'}</span>
                       </div>
                     </div>
                   </TableCell>
@@ -180,6 +204,68 @@ export function AccessLogsView() {
             )}
           </TableBody>
         </Table>
+
+        {/* --- PAGINAÇÃO --- */}
+        {!isLoading && filteredLogs.length > 0 && (
+          <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-center">
+            <Pagination>
+              <PaginationContent>
+                
+                <PaginationItem>
+                  <PaginationPrevious 
+                    href="#" 
+                    onClick={(e) => { 
+                      e.preventDefault(); 
+                      if (currentPage > 1) setCurrentPage(currentPage - 1); 
+                    }}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+
+                {/* Mostra números de página (limitado a 5 para não quebrar layout se tiver muitas) */}
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                    // Lógica simples: mostra os primeiros 5. 
+                    // Para logs (que podem ser milhares), o ideal seria uma lógica de "Janela" (1 ... 4 5 6 ... 99)
+                    // Mas vamos manter simples igual aos outros por enquanto.
+                    const pageNum = i + 1;
+                    return (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          href="#"
+                          isActive={currentPage === pageNum}
+                          onClick={(e) => { 
+                            e.preventDefault(); 
+                            setCurrentPage(pageNum); 
+                          }}
+                          className="cursor-pointer"
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                })}
+                
+                {totalPages > 5 && (
+                   <PaginationItem>
+                     <span className="px-2 text-slate-400">...</span>
+                   </PaginationItem>
+                )}
+
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => { 
+                      e.preventDefault(); 
+                      if (currentPage < totalPages) setCurrentPage(currentPage + 1); 
+                    }}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </div>
     </div>
   );

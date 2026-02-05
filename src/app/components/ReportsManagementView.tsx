@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { 
-  Search, Plus, Pencil, Trash2, MoreHorizontal,
-  FileBarChart, ExternalLink, Loader2, CheckCircle2, XCircle, Layout
+  Search, Plus, Pencil, Trash2,
+  FileBarChart, ExternalLink, Loader2, CheckCircle2, XCircle, Layout 
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -10,9 +10,13 @@ import {
 } from "@/app/components/ui/table";
 import { Badge } from "@/app/components/ui/badge";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, 
-  DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/app/components/ui/dropdown-menu";
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/app/components/ui/pagination";
 import { toast } from "sonner"; 
 
 import { ReportRegistrationModal } from "./ReportRegistrationModal";
@@ -27,19 +31,23 @@ export default function ReportsManagementsView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Report | null>(null);
 
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
   const fetchData = async () => {
     setLoading(true);
     try {
-
       const [repData, auxData] = await Promise.all([
-        reportService.getAll({ page: 1, pagesize: 50, orderby: 'title' }),
+        reportService.getAll({ page: 1, pagesize: 1000, orderby: 'title' }),
         reportService.getAuxiliaryData()
       ]);
 
       const map: Record<number, string> = {};
-      auxData.workspaces.forEach((w: any) => { map[w.id] = w.name; });
+      if (auxData && auxData.workspaces) {
+        auxData.workspaces.forEach((w: any) => { map[w.id] = w.name; });
+      }
       setWorkspacesMap(map);
-
       setReports(repData.items || []);
     } catch (error) {
       toast.error("Erro ao carregar relatórios.");
@@ -51,6 +59,10 @@ export default function ReportsManagementsView() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterSearch]);
 
   const handleEdit = (item: Report) => {
     setEditingItem(item); 
@@ -80,6 +92,11 @@ export default function ReportsManagementsView() {
       wsName.toLowerCase().includes(filterSearch.toLowerCase())
     );
   });
+
+  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentItems = filteredItems.slice(startIndex, endIndex);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -129,8 +146,8 @@ export default function ReportsManagementsView() {
                   <div className="flex justify-center gap-2"><Loader2 className="animate-spin" /> Carregando...</div>
                 </TableCell>
               </TableRow>
-            ) : filteredItems.length > 0 ? (
-              filteredItems.map((item) => (
+            ) : currentItems.length > 0 ? (
+              currentItems.map((item) => (
                 <TableRow key={item.id} className="hover:bg-slate-50/50">
                   <TableCell>
                     <div className="flex flex-col">
@@ -205,6 +222,55 @@ export default function ReportsManagementsView() {
             )}
           </TableBody>
         </Table>
+
+        {/* --- PAGINAÇÃO VISÍVEL SEMPRE QUE TIVER DADOS --- */}
+        {!loading && filteredItems.length > 0 && (
+          <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-center">
+            <Pagination>
+              <PaginationContent>
+                
+                <PaginationItem>
+                  <PaginationPrevious 
+                    href="#" 
+                    onClick={(e) => { 
+                      e.preventDefault(); 
+                      if (currentPage > 1) setCurrentPage(currentPage - 1); 
+                    }}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                  <PaginationItem key={pageNum}>
+                    <PaginationLink
+                      href="#"
+                      isActive={currentPage === pageNum}
+                      onClick={(e) => { 
+                        e.preventDefault(); 
+                        setCurrentPage(pageNum); 
+                      }}
+                      className="cursor-pointer"
+                    >
+                      {pageNum}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => { 
+                      e.preventDefault(); 
+                      if (currentPage < totalPages) setCurrentPage(currentPage + 1); 
+                    }}
+                    className={currentPage === totalPages || totalPages === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </div>
 
       <ReportRegistrationModal 

@@ -8,7 +8,14 @@ import { Input } from "@/app/components/ui/input";
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/app/components/ui/table";
-
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/app/components/ui/pagination";
 import { toast } from "sonner"; 
 
 import { WorkspaceRegistrationModal } from "./WorkspaceRegistrationModal";
@@ -22,11 +29,15 @@ export function WorkspacesListView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Workspace | null>(null);
 
+  // Estados para Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Busca apenas Workspaces
-      const wsData = await workspaceService.getAll({ page: 1, pagesize: 50, orderby: 'name' });
+      // Busca todos os Workspaces (limite alto) para paginar no Frontend
+      const wsData = await workspaceService.getAll({ page: 1, pagesize: 1000, orderby: 'name' });
       setWorkspaces(wsData.items || []);
     } catch (error) {
       toast.error("Erro ao carregar dados.");
@@ -38,6 +49,11 @@ export function WorkspacesListView() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Reseta para página 1 ao filtrar
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterSearch]);
 
   const handleEdit = (item: Workspace) => {
     setEditingItem(item); 
@@ -60,9 +76,16 @@ export function WorkspacesListView() {
     }
   };
 
+  // Lógica de Filtro
   const filteredItems = workspaces.filter(ws => {
     return (ws.name?.toLowerCase() || '').includes(filterSearch.toLowerCase());
   });
+
+  // Lógica de Paginação
+  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentItems = filteredItems.slice(startIndex, endIndex);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -110,8 +133,8 @@ export function WorkspacesListView() {
                   <div className="flex justify-center gap-2"><Loader2 className="animate-spin" /> Carregando...</div>
                 </TableCell>
               </TableRow>
-            ) : filteredItems.length > 0 ? (
-              filteredItems.map((item) => (
+            ) : currentItems.length > 0 ? (
+              currentItems.map((item) => (
                 <TableRow key={item.id} className="hover:bg-slate-50/50">
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -166,6 +189,55 @@ export function WorkspacesListView() {
             )}
           </TableBody>
         </Table>
+
+        {/* --- PAGINAÇÃO (Visível se houver dados) --- */}
+        {!loading && filteredItems.length > 0 && (
+          <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-center">
+            <Pagination>
+              <PaginationContent>
+                
+                <PaginationItem>
+                  <PaginationPrevious 
+                    href="#" 
+                    onClick={(e) => { 
+                      e.preventDefault(); 
+                      if (currentPage > 1) setCurrentPage(currentPage - 1); 
+                    }}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                  <PaginationItem key={pageNum}>
+                    <PaginationLink
+                      href="#"
+                      isActive={currentPage === pageNum}
+                      onClick={(e) => { 
+                        e.preventDefault(); 
+                        setCurrentPage(pageNum); 
+                      }}
+                      className="cursor-pointer"
+                    >
+                      {pageNum}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => { 
+                      e.preventDefault(); 
+                      if (currentPage < totalPages) setCurrentPage(currentPage + 1); 
+                    }}
+                    className={currentPage === totalPages || totalPages === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </div>
 
       <WorkspaceRegistrationModal 
