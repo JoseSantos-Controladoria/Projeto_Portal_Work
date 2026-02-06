@@ -16,7 +16,6 @@ export const groupService = {
 
   getAll: async (pagination?: PaginationParams) => {
     try {
-
       const response = await crudService.getAll<Group>('group', pagination);
       return response;
     } catch (error) {
@@ -27,7 +26,6 @@ export const groupService = {
 
   getById: async (id: number) => {
     try {
-
       const response = await crudService.getAll<Group>('group', undefined, { id: id });
       
       if (response.items && response.items.length > 0) {
@@ -75,7 +73,8 @@ export const groupService = {
       if (groupId) {
         await crudService.update('group', groupId, groupData);
       } else {
-        const res = await crudService.create('group', groupData);
+        // GARANTE QUE NASÇA ATIVO
+        const res = await crudService.create('group', { ...groupData, active: true });
         groupId = res.id;
       }
     } catch (error) {
@@ -85,7 +84,6 @@ export const groupService = {
 
     if (groupId) {
       try {
-
         if (isNewGroup && (!selectedUserIds || selectedUserIds.length === 0)) {
            return groupId;
         }
@@ -104,7 +102,13 @@ export const groupService = {
     return groupId;
   },
 
+  // --- MUDANÇA: Soft Delete (Inativação) ---
   delete: async (id: number) => {
-    return await crudService.delete('group', id);
+    return await crudService.update('group', id, { active: false });
+  },
+
+  // --- NOVO: Reativar ---
+  reactivate: async (id: number) => {
+    return await crudService.update('group', id, { active: true });
   }
 };

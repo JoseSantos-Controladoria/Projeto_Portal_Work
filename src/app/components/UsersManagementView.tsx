@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { 
   Search, Plus, Pencil, Trash2, 
-  ShieldAlert, ShieldCheck, User as UserIcon, Building, Loader2 
+  ShieldAlert, ShieldCheck, User as UserIcon, Building, Loader2,
+  RefreshCcw // Ícone de reload importado
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
+import { Checkbox } from "@/app/components/ui/checkbox";
+import { Label } from "@/app/components/ui/label";
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/app/components/ui/table";
@@ -32,6 +35,7 @@ export function UsersManagementView() {
   const ITEMS_PER_PAGE = 10;
 
   const [filterSearch, setFilterSearch] = useState("");
+  const [showInactive, setShowInactive] = useState(false); // false = Ativos, true = Inativos
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
@@ -62,7 +66,7 @@ export function UsersManagementView() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterSearch]);
+  }, [filterSearch, showInactive]);
 
   const handleEdit = (id: string) => {
     setSelectedUserId(id);
@@ -74,14 +78,23 @@ export function UsersManagementView() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este usuário?")) return;
+  // Lógica Unificada: Inativar ou Reativar
+  const handleToggleStatus = async (user: User) => {
+    const action = user.active ? "inativar" : "reativar";
+    
+    if (!confirm(`Deseja realmente ${action} o acesso de ${user.name}?`)) return;
+
     try {
-      await userService.delete(id);
-      toast.success("Usuário removido.");
+      if (user.active) {
+        await userService.delete(user.id); // Inativa
+        toast.success("Usuário inativado com sucesso.");
+      } else {
+        await userService.reactivate(user.id); // Reativa
+        toast.success("Usuário reativado com sucesso.");
+      }
       fetchData();
     } catch (error) {
-      toast.error("Erro ao excluir.");
+      toast.error(`Erro ao ${action} usuário.`);
     }
   };
 
@@ -96,10 +109,17 @@ export function UsersManagementView() {
     return <Badge variant="outline" className="text-slate-600 gap-1 bg-slate-50"><UserIcon className="w-3 h-3" /> Cliente</Badge>;
   };
 
-  const filteredUsers = users.filter(user => 
-    (user.name?.toLowerCase() || '').includes(filterSearch.toLowerCase()) ||
-    (user.email?.toLowerCase() || '').includes(filterSearch.toLowerCase())
-  );
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = (user.name?.toLowerCase() || '').includes(filterSearch.toLowerCase()) ||
+                          (user.email?.toLowerCase() || '').includes(filterSearch.toLowerCase());
+    
+    // showInactive = true  -> Mostra APENAS user.active === false
+    // showInactive = false -> Mostra APENAS user.active === true
+    const isUserActive = user.active !== false;
+    const matchesStatus = showInactive ? !isUserActive : isUserActive;
+
+    return matchesSearch && matchesStatus;
+  });
 
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -129,8 +149,8 @@ export function UsersManagementView() {
         </div>
       </div>
 
-      {/* Busca */}
-      <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+      {/* Busca e Filtros */}
+      <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:w-1/2">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input 
@@ -139,6 +159,21 @@ export function UsersManagementView() {
             value={filterSearch}
             onChange={(e) => setFilterSearch(e.target.value)}
           />
+        </div>
+
+        {/* Checkbox "Ver Apenas Inativos" */}
+        <div className="flex items-center space-x-2 w-full md:w-auto bg-slate-50 px-3 py-2 rounded-md border border-slate-100">
+            <Checkbox 
+                id="show-inactive-users" 
+                checked={showInactive}
+                onCheckedChange={(checked) => setShowInactive(checked as boolean)}
+            />
+            <Label 
+                htmlFor="show-inactive-users" 
+                className="text-sm font-medium leading-none cursor-pointer text-slate-600 select-none"
+            >
+                Ver apenas inativos
+            </Label>
         </div>
       </div>
 
@@ -163,16 +198,18 @@ export function UsersManagementView() {
               </TableRow>
             ) : currentUsers.length > 0 ? (
               currentUsers.map((user) => (
-                <TableRow key={user.id} className="hover:bg-slate-50/50">
+                <TableRow key={user.id} className={`hover:bg-slate-50/50 ${!user.active ? 'bg-slate-50/50' : ''}`}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9 border border-slate-200">
-                        <AvatarFallback className="bg-blue-100 text-blue-700 font-bold">
+                        <AvatarFallback className={`${!user.active ? 'bg-slate-200 text-slate-500' : 'bg-blue-100 text-blue-700'} font-bold`}>
                           {user.name ? user.name.charAt(0).toUpperCase() : '?'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-slate-900">{user.name || 'Sem nome'}</span>
+                        <span className={`text-sm font-medium ${!user.active ? 'text-slate-500 line-through' : 'text-slate-900'}`}>
+                            {user.name || 'Sem nome'}
+                        </span>
                         <span className="text-xs text-slate-500">{user.email || '-'}</span>
                       </div>
                     </div>
@@ -207,14 +244,19 @@ export function UsersManagementView() {
                             <Pencil className="h-4 w-4" />
                         </Button>
                         
+                        {/* BOTÃO DE TOGGLE (LIXEIRA ou REFRESH) */}
                         <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => handleDelete(user.id)}
-                            title="Excluir"
+                            className={`h-8 w-8 ${user.active ? 'text-red-600 hover:text-red-700 hover:bg-red-50' : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'}`}
+                            onClick={() => handleToggleStatus(user)}
+                            title={user.active ? "Inativar" : "Reativar"}
                         >
-                            <Trash2 className="h-4 w-4" />
+                            {user.active ? (
+                                <Trash2 className="h-4 w-4" />
+                            ) : (
+                                <RefreshCcw className="h-4 w-4" />
+                            )}
                         </Button>
                     </div>
                   </TableCell>
@@ -223,14 +265,14 @@ export function UsersManagementView() {
             ) : (
               <TableRow>
                 <TableCell colSpan={5} className="h-32 text-center text-slate-500">
-                  Nenhum usuário encontrado.
+                  {showInactive ? "Nenhum usuário inativo encontrado." : "Nenhum usuário ativo encontrado."}
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
 
-        {/* 3. Paginação Estilo "Sheets" */}
+        {/* Paginação */}
         {!loading && filteredUsers.length > ITEMS_PER_PAGE && (
           <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-center">
             <Pagination>

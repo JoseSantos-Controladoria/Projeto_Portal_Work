@@ -53,7 +53,6 @@ export function UserProfileView() {
     }
   }, [user]);
 
-  // --- Lógica de Validação Visual ---
   const passwordsMatch = securityData.newPassword === securityData.confirmPassword;
   const isConfirming = securityData.confirmPassword.length > 0;
   const isPasswordValid = securityData.newPassword.length >= 6;

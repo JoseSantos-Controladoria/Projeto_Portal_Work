@@ -4,12 +4,12 @@ import {
   Plus, 
   Pencil, 
   Trash2, 
-  MoreHorizontal,
   Users, 
   Building2, 
   Loader2,
   CheckCircle2,
-  XCircle
+  XCircle,
+  RefreshCcw 
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -17,11 +17,13 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/app/components/ui/table";
 import { Badge } from "@/app/components/ui/badge";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, 
-  DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/app/components/ui/dropdown-menu";
 import { toast } from "sonner"; 
+
+// --- IMPORTS CRÍTICOS (IGUAL AO REPORT) ---
+import { Checkbox } from "@/app/components/ui/checkbox";
+import { Label } from "@/app/components/ui/label";
+// ------------------------------------------
+
 import { GroupRegistrationModal } from "./GroupRegistrationModal";
 import { groupService, Group } from "@/services/groupService";
 
@@ -30,13 +32,14 @@ export function GroupsManagementView() {
   const [loading, setLoading] = useState(true);
   
   const [filterSearch, setFilterSearch] = useState("");
+  const [showInactive, setShowInactive] = useState(false); // IGUAL AO REPORT
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await groupService.getAll({ page: 1, pagesize: 50, orderby: 'name' });
+      const data = await groupService.getAll({ page: 1, pagesize: 1000, orderby: 'name' });
       setGroups(data.items || []);
     } catch (error) {
       console.error("Erro ao carregar grupos:", error);
@@ -60,26 +63,44 @@ export function GroupsManagementView() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Tem a certeza que deseja excluir este grupo?")) return;
+  // --- LÓGICA DE TOGGLE (IGUAL AO REPORT) ---
+  const handleToggleStatus = async (group: Group) => {
+    const action = group.active ? "inativar" : "reativar";
+    
+    if (!confirm(`Deseja realmente ${action} o grupo "${group.name}"?`)) return;
+
     try {
-      await groupService.delete(id);
-      toast.success("Grupo removido.");
+      if (group.active) {
+        await groupService.delete(group.id); // Inativa
+        toast.success("Grupo inativado.");
+      } else {
+        await groupService.reactivate(group.id); // Reativa
+        toast.success("Grupo reativado.");
+      }
       fetchData();
     } catch (error) {
-      toast.error("Erro ao excluir. Verifique se existem vínculos.");
+      toast.error(`Erro ao ${action} o grupo.`);
     }
   };
 
-  const filteredGroups = groups.filter(group => 
-    (group.name?.toLowerCase() || '').includes(filterSearch.toLowerCase()) ||
-    (group.customer?.toLowerCase() || '').includes(filterSearch.toLowerCase())
-  );
+  // --- LÓGICA DE FILTRO (IGUAL AO REPORT) ---
+  const filteredGroups = groups.filter(group => {
+    const matchesSearch = (group.name?.toLowerCase() || '').includes(filterSearch.toLowerCase()) ||
+                          (group.customer?.toLowerCase() || '').includes(filterSearch.toLowerCase());
+    
+    const isGroupActive = group.active !== false;
+
+    // Se checkbox marcado -> Mostra Inativos
+    // Se desmarcado -> Mostra Ativos
+    const matchesStatus = showInactive ? !isGroupActive : isGroupActive;
+
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
-      {/* Header e Ações */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -99,8 +120,9 @@ export function GroupsManagementView() {
         </div>
       </div>
 
-      {/* Busca Simples */}
-      <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+      {/* --- BARRA DE FILTROS E CHECKBOX (ESTRUTURA IGUAL AO REPORT) --- */}
+      <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+        
         <div className="relative w-full md:w-1/2">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input 
@@ -109,6 +131,21 @@ export function GroupsManagementView() {
             value={filterSearch}
             onChange={(e) => setFilterSearch(e.target.value)}
           />
+        </div>
+
+        {/* Checkbox de Inativos */}
+        <div className="flex items-center space-x-2 w-full md:w-auto bg-slate-50 px-3 py-2 rounded-md border border-slate-100">
+            <Checkbox 
+                id="show-inactive-groups" 
+                checked={showInactive}
+                onCheckedChange={(checked) => setShowInactive(checked as boolean)}
+            />
+            <Label 
+                htmlFor="show-inactive-groups" 
+                className="text-sm font-medium leading-none cursor-pointer text-slate-600 select-none"
+            >
+                Ver apenas inativos
+            </Label>
         </div>
       </div>
 
@@ -135,13 +172,13 @@ export function GroupsManagementView() {
               </TableRow>
             ) : filteredGroups.length > 0 ? (
               filteredGroups.map((group) => (
-                <TableRow key={group.id} className="hover:bg-slate-50/50">
+                <TableRow key={group.id} className={`hover:bg-slate-50/50 ${!group.active ? 'bg-slate-50/60' : ''}`}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-slate-100 rounded-lg text-slate-500">
+                      <div className={`p-2 rounded-lg ${!group.active ? 'bg-slate-100 text-slate-400' : 'bg-blue-50 text-blue-600'}`}>
                         <Users className="w-4 h-4" />
                       </div>
-                      <span className="text-sm font-medium text-slate-900">
+                      <span className={`text-sm font-medium ${!group.active ? 'text-slate-500 line-through' : 'text-slate-900'}`}>
                         {group.name}
                       </span>
                     </div>
@@ -163,7 +200,7 @@ export function GroupsManagementView() {
                   <TableCell className="text-center">
                     {group.active ? (
                       <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
-                         <CheckCircle2 className="w-3 h-3" /> Ativo
+                          <CheckCircle2 className="w-3 h-3" /> Ativo
                       </Badge>
                     ) : (
                       <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200 gap-1">
@@ -173,30 +210,39 @@ export function GroupsManagementView() {
                   </TableCell>
 
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600">
-                          <MoreHorizontal className="h-4 w-4" />
+                     <div className="flex items-center justify-end gap-2">
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            onClick={() => handleEdit(group.id)}
+                            title="Editar"
+                        >
+                            <Pencil className="h-4 w-4" />
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleEdit(group.id)}>
-                            <Pencil className="mr-2 h-4 w-4" /> Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(group.id)}>
-                            <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                        
+                        {/* BOTÃO INTELIGENTE: LIXEIRA OU REFRESH */}
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className={`h-8 w-8 ${group.active ? 'text-red-600 hover:text-red-700 hover:bg-red-50' : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'}`}
+                            onClick={() => handleToggleStatus(group)}
+                            title={group.active ? "Inativar" : "Reativar"}
+                        >
+                            {group.active ? (
+                                <Trash2 className="h-4 w-4" />
+                            ) : (
+                                <RefreshCcw className="h-4 w-4" />
+                            )}
+                        </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
                 <TableCell colSpan={5} className="h-32 text-center text-slate-500">
-                  Nenhum grupo encontrado.
+                   {showInactive ? "Nenhum grupo inativo encontrado." : "Nenhum grupo ativo encontrado."}
                 </TableCell>
               </TableRow>
             )}

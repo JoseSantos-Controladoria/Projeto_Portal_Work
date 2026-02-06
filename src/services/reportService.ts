@@ -46,12 +46,20 @@ export const reportService = {
     if (data.id) {
       return await crudService.update('report', data.id, data);
     } else {
-      return await crudService.create('report', data);
+      // Garante que novos relatórios nasçam ativos
+      return await crudService.create('report', { ...data, active: true });
     }
   },
 
+  // MUDANÇA: Soft Delete (Inativação)
   delete: async (id: number) => {
-    return await crudService.delete('report', id);
+    // Ao invés de excluir, atualizamos para active: false
+    return await crudService.update('report', id, { active: false });
+  },
+
+  // Método auxiliar para reativar, caso precise explícito
+  reactivate: async (id: number) => {
+    return await crudService.update('report', id, { active: true });
   },
 
   getMyReports: async (userId: number | string) => {

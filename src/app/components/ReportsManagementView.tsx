@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { 
   Search, Plus, Pencil, Trash2,
-  FileBarChart, ExternalLink, Loader2, CheckCircle2, XCircle, Layout 
+  FileBarChart, ExternalLink, Loader2, CheckCircle2, XCircle, Layout, RefreshCcw 
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
+import { Checkbox } from "@/app/components/ui/checkbox"; // Importado
+import { Label } from "@/app/components/ui/label";       // Importado
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/app/components/ui/table";
@@ -28,6 +30,7 @@ export default function ReportsManagementsView() {
   const [loading, setLoading] = useState(true);
   
   const [filterSearch, setFilterSearch] = useState("");
+  const [showInactive, setShowInactive] = useState(false); // Controle do filtro
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Report | null>(null);
 
@@ -62,7 +65,7 @@ export default function ReportsManagementsView() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterSearch]);
+  }, [filterSearch, showInactive]); // Reinicia paginação ao mudar filtros
 
   const handleEdit = (item: Report) => {
     setEditingItem(item); 
@@ -74,23 +77,37 @@ export default function ReportsManagementsView() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Excluir este relatório permanentemente?")) return;
+  // Função unificada para alternar status
+  const handleToggleStatus = async (item: Report) => {
+    const action = item.active ? "inativar" : "reativar";
+    if (!confirm(`Deseja realmente ${action} o relatório "${item.title}"?`)) return;
+
     try {
-      await reportService.delete(id);
-      toast.success("Relatório removido.");
+      if (item.active) {
+        await reportService.delete(item.id); // Service já faz o update active: false
+        toast.success("Relatório inativado.");
+      } else {
+        await reportService.reactivate(item.id); // Ou save({id, active: true})
+        toast.success("Relatório reativado.");
+      }
       fetchData();
     } catch (error) {
-      toast.error("Erro ao excluir.");
+      toast.error(`Erro ao ${action} relatório.`);
     }
   };
 
   const filteredItems = reports.filter(r => {
     const wsName = workspacesMap[r.workspace_id] || "";
-    return (
-      (r.title?.toLowerCase() || '').includes(filterSearch.toLowerCase()) ||
-      wsName.toLowerCase().includes(filterSearch.toLowerCase())
-    );
+    const matchesSearch = (r.title?.toLowerCase() || '').includes(filterSearch.toLowerCase()) ||
+                          wsName.toLowerCase().includes(filterSearch.toLowerCase());
+    
+    // Lógica Exclusiva:
+    // showInactive = true -> Mostra SÓ inativos
+    // showInactive = false -> Mostra SÓ ativos
+    const isItemActive = r.active !== false; 
+    const matchesStatus = showInactive ? !isItemActive : isItemActive;
+
+    return matchesSearch && matchesStatus;
   });
 
   const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
@@ -101,6 +118,7 @@ export default function ReportsManagementsView() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
+      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -116,7 +134,8 @@ export default function ReportsManagementsView() {
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+      {/* Barra de Filtros */}
+      <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:w-1/2">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input 
@@ -125,6 +144,21 @@ export default function ReportsManagementsView() {
             value={filterSearch}
             onChange={(e) => setFilterSearch(e.target.value)}
           />
+        </div>
+
+        {/* Checkbox de Inativos */}
+        <div className="flex items-center space-x-2 w-full md:w-auto bg-slate-50 px-3 py-2 rounded-md border border-slate-100">
+            <Checkbox 
+                id="show-inactive-reports" 
+                checked={showInactive}
+                onCheckedChange={(checked) => setShowInactive(checked as boolean)}
+            />
+            <Label 
+                htmlFor="show-inactive-reports" 
+                className="text-sm font-medium leading-none cursor-pointer text-slate-600 select-none"
+            >
+                Ver apenas inativos
+            </Label>
         </div>
       </div>
 
@@ -148,12 +182,14 @@ export default function ReportsManagementsView() {
               </TableRow>
             ) : currentItems.length > 0 ? (
               currentItems.map((item) => (
-                <TableRow key={item.id} className="hover:bg-slate-50/50">
+                <TableRow key={item.id} className={`hover:bg-slate-50/50 ${!item.active ? 'bg-slate-50/60' : ''}`}>
                   <TableCell>
                     <div className="flex flex-col">
                         <div className="flex items-center gap-2">
-                          <FileBarChart className="w-4 h-4 text-slate-500" />
-                          <span className="font-medium text-slate-900">{item.title}</span>
+                          <FileBarChart className={`w-4 h-4 ${!item.active ? 'text-slate-400' : 'text-slate-500'}`} />
+                          <span className={`font-medium ${!item.active ? 'text-slate-500 line-through' : 'text-slate-900'}`}>
+                              {item.title}
+                          </span>
                         </div>
                         {item.description && <span className="text-xs text-slate-500 mt-1 pl-6 truncate max-w-[250px]">{item.description}</span>}
                     </div>
@@ -182,7 +218,7 @@ export default function ReportsManagementsView() {
                          <CheckCircle2 className="w-3 h-3" /> Ativo
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200 gap-1">
+                      <Badge variant="outline" className="bg-slate-100 text-slate-500 border-slate-200 gap-1">
                         <XCircle className="w-3 h-3" /> Inativo
                       </Badge>
                     )}
@@ -200,14 +236,19 @@ export default function ReportsManagementsView() {
                         <Pencil className="h-4 w-4" />
                       </Button>
                       
+                      {/* Botão de Toggle Status: Lixeira (Inativar) ou Refresh (Reativar) */}
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                        onClick={() => handleDelete(item.id)}
-                        title="Excluir"
+                        className={`h-8 w-8 ${item.active ? 'text-red-600 hover:text-red-700 hover:bg-red-50' : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'}`}
+                        onClick={() => handleToggleStatus(item)}
+                        title={item.active ? "Inativar" : "Reativar"}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        {item.active ? (
+                            <Trash2 className="h-4 w-4" />
+                        ) : (
+                            <RefreshCcw className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </TableCell>
@@ -216,14 +257,14 @@ export default function ReportsManagementsView() {
             ) : (
               <TableRow>
                 <TableCell colSpan={5} className="h-32 text-center text-slate-500">
-                  Nenhum relatório encontrado.
+                  {showInactive ? "Nenhum relatório inativo encontrado." : "Nenhum relatório ativo encontrado."}
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
 
-        {/* --- PAGINAÇÃO VISÍVEL SEMPRE QUE TIVER DADOS --- */}
+        {/* Paginação */}
         {!loading && filteredItems.length > 0 && (
           <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-center">
             <Pagination>

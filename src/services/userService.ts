@@ -31,7 +31,8 @@ export const userService = {
       const response = await crudService.getAll<User>('user', undefined, { id: id });
       
       if (response.items && response.items.length > 0) {
-        return response.items[0]; 
+        const found = response.items.find((u: any) => String(u.id) === String(id));
+        return found || response.items[0]; 
       }
       
       throw new Error("Usuário não encontrado.");
@@ -111,7 +112,13 @@ export const userService = {
     return await crudService.update('user', id, data);
   },
 
+  // Soft Delete: Apenas inativa
   delete: async (id: string | number) => {
-    return await crudService.delete('user', id);
+    return await crudService.update('user', id, { active: false });
+  },
+
+  // NOVO: Reativar usuário
+  reactivate: async (id: string | number) => {
+    return await crudService.update('user', id, { active: true });
   }
 };
