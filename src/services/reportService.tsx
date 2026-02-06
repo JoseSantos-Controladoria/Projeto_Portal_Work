@@ -11,7 +11,6 @@ export interface Report {
 }
 
 export const reportService = {
-  // 1. Listar Relatórios
   getAll: async (pagination?: PaginationParams) => {
     try {
       return await crudService.getAll<Report>('report', pagination);
@@ -21,11 +20,9 @@ export const reportService = {
     }
   },
 
-  // 2. Buscar Dados Auxiliares (Workspaces para o Select)
-  // ESSA É A FUNÇÃO QUE ESTAVA FALTANDO OU COM ERRO
   getAuxiliaryData: async () => {
     try {
-      // Busca a lista de workspaces para preencher o select
+
       const workspaces = await crudService.getAll('workspace');
       return {
         workspaces: workspaces.items || []

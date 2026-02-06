@@ -15,22 +15,19 @@ export interface User {
 }
 
 export const userService = {
-  // 1. Listar Usuários
+
   getAll: async (pagination?: PaginationParams) => {
     try {
-      // VOLTAMOS PARA 'user' (SINGULAR)
       const response = await crudService.getAll<User>('user', pagination);
       return response;
     } catch (error) {
-      console.error("❌ [UserService] Erro ao listar usuários:", error);
+      console.error("Erro ao listar usuários:", error);
       throw error; 
     }
   },
 
-  // 2. Buscar por ID
   getById: async (id: string | number) => {
     try {
-      // VOLTAMOS PARA 'user' (SINGULAR)
       const response = await crudService.getAll<User>('user', undefined, { id: id });
       
       if (response.items && response.items.length > 0) {
@@ -39,12 +36,11 @@ export const userService = {
       
       throw new Error("Usuário não encontrado.");
     } catch (error) {
-      console.error(`❌ [UserService] Erro ao buscar usuário ${id}:`, error);
+      console.error(`Erro ao buscar usuário ${id}:`, error);
       throw error;
     }
   },
 
-  // 3. Auxiliares
   getAuxiliaryData: async () => {
     try {
       const [companies, profiles, groups] = await Promise.all([
@@ -59,7 +55,7 @@ export const userService = {
         groups: groups.items || []
       };
     } catch (error) {
-      console.error("❌ [UserService] Erro ao carregar auxiliares:", error);
+      console.error("Erro ao carregar auxiliares:", error);
       return { companies: [], profiles: [], groups: [] };
     }
   },
@@ -74,18 +70,15 @@ export const userService = {
     }
   },
 
-  // 4. Salvar (Lógica complexa com grupos)
   save: async (userData: Partial<User>, selectedGroupIds: number[]) => {
     let userId = userData.id;
     let isNewUser = !userId;
 
     try {
       if (userId) {
-        // VOLTAMOS PARA 'user' (SINGULAR)
         await crudService.update('user', userId, userData);
       } else {
         const payload = { ...userData, password: userData.password || '123456' };
-        // VOLTAMOS PARA 'user' (SINGULAR)
         const res = await crudService.create('user', payload);
         userId = res.id;
       }
@@ -107,22 +100,18 @@ export const userService = {
           });
         }
       } catch (groupError) {
-        console.error("⚠️ Aviso: Usuário salvo, mas erro ao vincular grupos:", groupError);
+        console.error("Usuário salvo, mas erro ao vincular grupos:", groupError);
         toast.warning("Usuário salvo, mas houve falha ao vincular os grupos.");
       }
     }
     return userId;
   },
 
-  // 5. Update Simples (Para Tela de Perfil)
   update: async (id: string | number, data: Partial<User>) => {
-    // VOLTAMOS PARA 'user' (SINGULAR)
     return await crudService.update('user', id, data);
   },
 
-  // 6. Deletar
   delete: async (id: string | number) => {
-    // VOLTAMOS PARA 'user' (SINGULAR)
     return await crudService.delete('user', id);
   }
 };

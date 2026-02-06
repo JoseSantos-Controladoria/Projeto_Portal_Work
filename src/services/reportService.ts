@@ -1,4 +1,3 @@
-// src/services/reportService.ts
 import api from './api'; 
 import { crudService, PaginationParams } from './crudService';
 
@@ -14,12 +13,11 @@ export interface Report {
 }
 
 export const reportService = {
-  // 1. Listar (Admin)
+
   getAll: async (pagination?: PaginationParams) => {
     return await crudService.getAll<Report>('report', pagination);
   },
 
-  // ✅ NOVO: Buscar relatório por ID (Para o Editar funcionar)
   getById: async (id: number) => {
     try {
       const response = await crudService.getAll<Report>('report', undefined, { id: id });
@@ -29,12 +27,11 @@ export const reportService = {
       }
       throw new Error("Relatório não encontrado.");
     } catch (error) {
-      console.error(`❌ [ReportService] Erro ao buscar relatório ${id}:`, error);
+      console.error(`Erro ao buscar relatório ${id}:`, error);
       throw error;
     }
   },
 
-  // 2. Dados Auxiliares
   getAuxiliaryData: async () => {
     try {
       const workspaces = await crudService.getAll('workspace');
@@ -45,7 +42,6 @@ export const reportService = {
     }
   },
 
-  // 3. Salvar (COM RETURN PARA PEGAR O ID)
   save: async (data: Partial<Report>) => {
     if (data.id) {
       return await crudService.update('report', data.id, data);
@@ -54,12 +50,10 @@ export const reportService = {
     }
   },
 
-  // 4. Deletar
   delete: async (id: number) => {
     return await crudService.delete('report', id);
   },
 
-  // 5. Meus Relatórios (Visão do Cliente/Usuário)
   getMyReports: async (userId: number | string) => {
     try {
       const response = await api.get(`/myreports/${userId}`);
@@ -70,7 +64,6 @@ export const reportService = {
     }
   },
 
-  // 6. Buscar Grupos vinculados a um Relatório (para Edição)
   getReportGroups: async (reportId: number) => {
     try {
       const response = await api.get(`/groupsbyreport/${reportId}`);
@@ -81,7 +74,6 @@ export const reportService = {
     }
   },
 
-  // 7. Salvar Vínculo de Grupos
   saveGroups: async (reportId: number, groupIds: number[]) => {
     await api.post('/groupsbyreport', {
       reportid: reportId,

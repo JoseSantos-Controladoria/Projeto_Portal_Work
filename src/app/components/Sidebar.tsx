@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-// 1. ADICIONADO 'profile' AO TIPO
+// Definição exata dos IDs das telas
 export type SidebarView = 'reports' | 'register_report' | 'workspaces' | 'clients' | 'users' | 'logs' | 'profile';
 
 interface SidebarProps {
@@ -52,7 +52,6 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   return (
     <aside className="w-72 bg-slate-900 text-slate-300 flex flex-col h-screen transition-all duration-300 shadow-xl z-50 border-r border-slate-800">
       
-      {/* --- CABEÇALHO --- */}
       <div className="px-6 pt-8 pb-8 flex flex-col items-start">
         <img 
           src="/images/logo-white.png" 
@@ -65,21 +64,18 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
         </p>
       </div>
 
-      {/* Navegação Principal */}
       <nav className="flex-1 px-4 py-6 overflow-y-auto custom-scrollbar space-y-8">
-        
-        {/* GRUPO 1: OPERACIONAL*/}
         <div>
           <p className="px-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
             <LayoutGrid className="w-3 h-3" />
             Operacional
           </p>
           <div className="space-y-1">
+            {/* O ID aqui ('reports') deve ser idêntico ao do App.tsx */}
             <NavItem id="reports" label="Meus Relatórios" icon={LayoutGrid} />
           </div>
         </div>
 
-        {/* GRUPO 2: CONFIGURAÇÕES (APENAS ADMIN) */}
         {isAdmin && (
           <div className="animate-in fade-in slide-in-from-left-5 duration-300">
             <p className="px-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2 mt-6">
@@ -95,13 +91,10 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
             </div>
           </div>
         )}
-
       </nav>
 
-      {/* Footer / User Profile */}
       <div className="p-4 border-t border-slate-800 bg-slate-950/30">
-        
-        {/* 2. ÁREA DE PERFIL CLICÁVEL */}
+        {/* Botão de Perfil */}
         <div 
            className={cn(
              "flex items-center gap-3 mb-4 px-2 py-2 rounded-lg cursor-pointer transition-colors group",

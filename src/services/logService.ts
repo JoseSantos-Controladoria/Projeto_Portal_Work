@@ -27,12 +27,10 @@ export const logService = {
 
   getAll: async (params?: PaginationParams): Promise<LogEntry[]> => {
     try {
-      // Usa o helper de query string para passar page=1, pagesize=1000, etc.
+
       const queryString = buildQueryParams(params);
       const response = await api.get(`/logs${queryString}`);
-      
-      // Ajuste conforme o retorno real do seu controller.
-      // O BasicTable geralmente retorna { items: [...], total: ... }
+
       if (response.data && response.data.items) {
           return response.data.items;
       }

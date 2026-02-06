@@ -39,7 +39,11 @@ export const crudService = {
 
     if (filters) {
       Object.keys(filters).forEach(key => {
-        query += `&filters[${key}]=${filters[key]}`;
+
+        const value = filters[key];
+        if (value !== undefined && value !== null) {
+            query += `&${key}=${encodeURIComponent(String(value))}`;
+        }
       });
     }
 
@@ -48,7 +52,8 @@ export const crudService = {
   },
 
   getById: async (table: string, id: string | number) => {
-    const response = await api.get(`/basictable?tablename=${table}&filters[id]=[equal]${id}`);
+
+    const response = await api.get(`/basictable?tablename=${table}&id=[equal]${id}`);
     return response.data.items ? response.data.items[0] : null;
   },
 
@@ -57,20 +62,17 @@ export const crudService = {
     return response.data;
   },
 
-  // ✅ CORREÇÃO CRÍTICA AQUI
   update: async (table: string, id: string | number, data: any) => {
-    // 1. O Backend exige o ID dentro do corpo do objeto (req.body.id)
+
     const payload = { ...data, id: id };
     
-    // 2. O Backend usa a rota PATCH, não PUT
     const response = await api.patch(`/basictable?tablename=${table}`, payload);
     return response.data;
   },
 
-  // Ajuste preventivo também no delete, pois seu backend pede ID no body
   delete: async (table: string, id: string | number) => {
     const response = await api.delete(`/basictable?tablename=${table}`, {
-      data: { id: id } // Envia ID no body
+      data: { id: id } 
     });
     return response.data;
   }

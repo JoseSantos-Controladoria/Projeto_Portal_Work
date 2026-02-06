@@ -8,7 +8,7 @@ export interface Workspace {
 }
 
 export const workspaceService = {
-  // 1. Listar Workspaces
+
   getAll: async (pagination?: PaginationParams) => {
     try {
       return await crudService.getAll<Workspace>('workspace', pagination);
@@ -18,7 +18,6 @@ export const workspaceService = {
     }
   },
 
-  // 2. Salvar (Criar ou Editar)
   save: async (data: Partial<Workspace>) => {
     try {
       if (data.id) {
@@ -32,7 +31,6 @@ export const workspaceService = {
     }
   },
 
-  // 3. Deletar (Hard Delete, já que não temos 'active')
   delete: async (id: number) => {
     return await crudService.delete('workspace', id);
   }
